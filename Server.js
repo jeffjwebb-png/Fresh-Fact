@@ -20,7 +20,7 @@ async function start() {
   }
 
   const facilitator = new HTTPFacilitatorClient({
-    url: "url: "https://api.cdp.coinbase.com/platform/v2/x402",
+    url: "https://api.cdp.coinbase.com/platform/v2/x402",
   });
 
   const resourceServer = new x402ResourceServer(facilitator)
