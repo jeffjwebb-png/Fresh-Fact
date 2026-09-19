@@ -7,6 +7,12 @@
     "start": "node Server.js"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "dependencies": {
+  "express": "^4.21.2",
+  "@x402/express": "^2.26.0",
+  "@x402/core": "^2.26.0",
+  "@x402/evm": "^2.26.0"
+}
   }
 }
