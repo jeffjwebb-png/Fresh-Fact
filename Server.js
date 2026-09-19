@@ -7,11 +7,11 @@ async function start() {
   const { paymentMiddleware, x402ResourceServer } =
     await import("@x402/express");
 
-  const { HTTPFacilitatorClient } =
-    await import("@x402/core/server");
-
   const { ExactEvmScheme } =
     await import("@x402/evm/exact/server");
+
+  const { createCdpFacilitatorClient } =
+    await import("@coinbase/cdp-sdk/x402");
 
   const payTo = process.env.FRESHFACT_PAY_TO;
 
@@ -19,9 +19,7 @@ async function start() {
     throw new Error("FRESHFACT_PAY_TO environment variable is missing");
   }
 
-  const facilitator = new HTTPFacilitatorClient({
-    url: "https://api.cdp.coinbase.com/platform/v2/x402",
-  });
+  const facilitator = createCdpFacilitatorClient();
 
   const resourceServer = new x402ResourceServer(facilitator)
     .register("eip155:8453", new ExactEvmScheme());
