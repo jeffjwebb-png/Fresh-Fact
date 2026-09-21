@@ -1,6 +1,7 @@
 const express = require("express");
 
 const app = express();
+app.s app.set('trust proxy', 1);
 const port = process.env.PORT || 3000;
 
 async function start() {
