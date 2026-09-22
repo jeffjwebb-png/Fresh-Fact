@@ -261,7 +261,7 @@ async function start() {
 
   const resourceServer = new x402ResourceServer(facilitator)
     .register("eip155:8453", new ExactEvmScheme())
-    .useExtension(bazaarResourceServerExtension);
+    .registerExtension(bazaarResourceServerExtension);
 
   const paywallConfig = {
     appName: "FreshFact",
@@ -313,6 +313,17 @@ async function start() {
         data: {
           text: "Current extracted source text",
         },
+      },
+      schema: {
+        type: "object",
+        properties: {
+          service: { type: "string" },
+          source: { type: "object" },
+          freshness: { type: "object" },
+          integrity: { type: "object" },
+          data: { type: "object" },
+        },
+        required: ["service", "source", "freshness", "integrity", "data"],
       },
     },
   });
