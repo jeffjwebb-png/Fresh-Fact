@@ -296,6 +296,7 @@ async function start() {
       required: ["url"],
     },
     output: {
+      type: "json",
       example: {
         service: "FreshFact Evidence",
         source: {
@@ -330,6 +331,7 @@ async function start() {
       mimeType: "application/json",
       serviceName: "FreshFact Evidence",
       tags: ["web", "evidence", "freshness", "research", "agents"],
+      iconUrl: "https://fresh-fact.onrender.com/icon.png",
       extensions: evidenceDiscovery,
     },
   };
