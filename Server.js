@@ -523,6 +523,12 @@ ${baseUrl}/.well-known/x402-catalog.json
     });
   });
 
+  // Compatibility discovery document consumed by x402scan and other crawlers.
+  app.get("/.well-known/x402", (req, res) => {
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    res.json({ version: 1, resources: [`${baseUrl}/api/evidence`] });
+  });
+
   app.get("/openapi.json", (req, res) => {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
@@ -535,11 +541,28 @@ ${baseUrl}/.well-known/x402-catalog.json
           "Pay-per-request fresh web evidence over x402.",
       },
       servers: [{ url: baseUrl }],
+      components: {
+        securitySchemes: {
+          x402Payment: {
+            type: "apiKey",
+            in: "header",
+            name: "PAYMENT-SIGNATURE",
+            description: "x402 v2 payment payload; obtain requirements from an unpaid HTTP 402 response.",
+          },
+        },
+      },
       paths: {
         "/api/evidence": {
           get: {
             summary:
               "Retrieve current clean evidence from a public web URL",
+            security: [{ x402Payment: [] }],
+            "x-payment-info": {
+              protocols: ["x402"],
+              price: { mode: "fixed", currency: "USD", amount: "0.01" },
+              network: "eip155:8453",
+              asset: "USDC",
+            },
             parameters: [
               {
                 name: "url",
