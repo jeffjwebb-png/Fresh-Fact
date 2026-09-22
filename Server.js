@@ -276,12 +276,6 @@ async function start() {
   const { createCdpFacilitatorClient } =
     await import("@coinbase/cdp-sdk/x402");
 
-  const { createPaywall } =
-    await import("@x402/paywall");
-
-  const { evmPaywall } =
-    await import("@x402/paywall/evm");
-
   const { declareDiscoveryExtension, bazaarResourceServerExtension } =
     await import("@x402/extensions/bazaar");
 
@@ -298,16 +292,6 @@ async function start() {
   const resourceServer = new x402ResourceServer(facilitator)
     .register("eip155:8453", new ExactEvmScheme())
     .registerExtension(bazaarResourceServerExtension);
-
-  const paywallConfig = {
-    appName: "FreshFact",
-    testnet: false,
-  };
-
-  const paywall = createPaywall()
-    .withNetwork(evmPaywall)
-    .withConfig(paywallConfig)
-    .build();
 
   const evidenceDiscovery = declareDiscoveryExtension({
     input: {
@@ -619,14 +603,7 @@ ${baseUrl}/.well-known/x402-catalog.json
     });
   });
 
-  app.use(
-    paymentMiddleware(
-      routes,
-      resourceServer,
-      paywallConfig,
-      paywall
-    )
-  );
+  app.use(paymentMiddleware(routes, resourceServer));
 
   app.get("/api/evidence", async (req, res) => {
     const requestedUrl =
