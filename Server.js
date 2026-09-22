@@ -331,7 +331,6 @@ async function start() {
       mimeType: "application/json",
       serviceName: "FreshFact Evidence",
       tags: ["web", "evidence", "freshness", "research", "agents"],
-      iconUrl: "https://fresh-fact.onrender.com/icon.png",
       extensions: evidenceDiscovery,
     },
   };
