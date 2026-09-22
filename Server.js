@@ -246,6 +246,9 @@ async function start() {
   const { evmPaywall } =
     await import("@x402/paywall/evm");
 
+  const { declareDiscoveryExtension, bazaarResourceServerExtension } =
+    await import("@x402/extensions/bazaar");
+
   const payTo = process.env.FRESHFACT_PAY_TO;
 
   if (!payTo) {
@@ -257,7 +260,8 @@ async function start() {
   const facilitator = createCdpFacilitatorClient();
 
   const resourceServer = new x402ResourceServer(facilitator)
-    .register("eip155:8453", new ExactEvmScheme());
+    .register("eip155:8453", new ExactEvmScheme())
+    .useExtension(bazaarResourceServerExtension);
 
   const paywallConfig = {
     appName: "FreshFact",
@@ -268,6 +272,49 @@ async function start() {
     .withNetwork(evmPaywall)
     .withConfig(paywallConfig)
     .build();
+
+  const evidenceDiscovery = declareDiscoveryExtension({
+    input: {
+      url: "https://example.com",
+      maxChars: DEFAULT_MAX_CHARS,
+    },
+    inputSchema: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          format: "uri",
+          description: "Public HTTP or HTTPS URL to retrieve.",
+        },
+        maxChars: {
+          type: "integer",
+          minimum: 1000,
+          maximum: MAX_CHARS,
+          default: DEFAULT_MAX_CHARS,
+        },
+      },
+      required: ["url"],
+    },
+    output: {
+      example: {
+        service: "FreshFact Evidence",
+        source: {
+          finalUrl: "https://example.com/",
+          httpStatus: 200,
+        },
+        freshness: {
+          retrievedAt: "2026-01-01T00:00:00.000Z",
+        },
+        integrity: {
+          algorithm: "sha256",
+          contentHash: "sha256-hex",
+        },
+        data: {
+          text: "Current extracted source text",
+        },
+      },
+    },
+  });
 
   const routes = {
     "GET /api/evidence": {
@@ -281,6 +328,9 @@ async function start() {
       description:
         "FreshFact Evidence: retrieve a public web page as clean machine-readable evidence with freshness metadata, content hash, source URL, redirects, page metadata and extracted text.",
       mimeType: "application/json",
+      serviceName: "FreshFact Evidence",
+      tags: ["web", "evidence", "freshness", "research", "agents"],
+      extensions: evidenceDiscovery,
     },
   };
 
