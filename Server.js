@@ -368,22 +368,49 @@ async function start() {
   app.get("/", (req, res) => {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-    res.json({
-      name: "FreshFact",
-      status: "live",
-      product: "FreshFact Evidence",
-      description:
-        "Pay-per-request fresh web evidence for AI agents and software: clean text, provenance, freshness signals and a tamper-detectable content hash.",
-      price: "$0.01 USDC",
-      network: "Base",
-      paidEndpoint:
-        `${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com`,
-      health: `${baseUrl}/health`,
-      openapi: `${baseUrl}/openapi.json`,
-      discovery:
-        `${baseUrl}/.well-known/x402-catalog.json`,
-      llms: `${baseUrl}/llms.txt`,
-    });
+    res.type("html").send(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FreshFact Evidence</title>
+  <meta name="description" content="Fresh web evidence for AI agents and software.">
+  <style>
+    body{font-family:system-ui,-apple-system,sans-serif;max-width:900px;margin:0 auto;padding:48px 22px;line-height:1.55}
+    code,pre{background:#f3f3f3;border-radius:8px}pre{padding:14px;overflow:auto}
+    .price{font-size:1.25rem;font-weight:700}
+  </style>
+</head>
+<body>
+  <h1>FreshFact Evidence</h1>
+  <p>Fresh web evidence for AI agents and software.</p>
+  <p>Give FreshFact a public URL and receive clean extracted text, provenance, freshness signals, metadata and an integrity hash in machine-readable JSON.</p>
+  <p class="price">$0.01 USDC per successful request · Base mainnet · x402</p>
+
+  <h2>Paid endpoint</h2>
+  <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
+
+  <h2>What you receive</h2>
+  <ul>
+    <li>Current source retrieval</li>
+    <li>Clean extracted page text</li>
+    <li>Source and final URLs plus redirects</li>
+    <li>Page metadata and dates when available</li>
+    <li>HTTP freshness signals</li>
+    <li>SHA-256 hash of returned normalized text</li>
+    <li>Retrieval timestamp and fetch timing</li>
+  </ul>
+
+  <h2>Machine access</h2>
+  <p><a href="/openapi.json">OpenAPI</a> · <a href="/llms.txt">llms.txt</a> · <a href="/.well-known/x402-catalog.json">Discovery metadata</a> · <a href="/health">Health</a></p>
+
+  <p>A request without a valid x402 payment returns HTTP 402 with payment requirements. No API-key signup is required.</p>
+</body>
+</html>`);
+  });
+
+  app.get("/robots.txt", (req, res) => {
+    res.type("text/plain").send("User-agent: *\\nAllow: /\\n");
   });
 
   app.get("/health", (req, res) => {
