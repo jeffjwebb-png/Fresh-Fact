@@ -2,6 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 const dns = require("dns").promises;
 const net = require("net");
+const { Agent } = require("undici");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -12,6 +13,22 @@ const DEFAULT_MAX_CHARS = 30000;
 const MAX_CHARS = 50000;
 const FETCH_TIMEOUT_MS = 10000;
 const MAX_REDIRECTS = 5;
+// Validate the address used by the socket itself, including after DNS changes.
+const publicDispatcher = new Agent({
+  connect: {
+    lookup(hostname, options, callback) {
+      dns.lookup(hostname, options).then((result) => {
+        const addresses = Array.isArray(result) ? result : [result];
+        if (!addresses.length || addresses.some((entry) => isPrivateAddress(entry.address))) {
+          callback(new Error("PRIVATE_TARGET"));
+          return;
+        }
+        if (options.all) callback(null, addresses);
+        else callback(null, addresses[0].address, addresses[0].family);
+      }).catch(callback);
+    },
+  },
+});
 
 function isPrivateIPv4(ip) {
   const parts = ip.split(".").map(Number);
@@ -40,6 +57,10 @@ function isPrivateIPv4(ip) {
 
 function isPrivateIPv6(ip) {
   const normalized = ip.toLowerCase();
+  if (normalized.startsWith("::ffff:")) {
+    const embedded = normalized.slice(7);
+    if (net.isIP(embedded) === 4) return isPrivateIPv4(embedded);
+  }
 
   return (
     normalized === "::1" ||
@@ -147,13 +168,15 @@ async function fetchPublicText(initialUrl) {
         method: "GET",
         redirect: "manual",
         signal: controller.signal,
+        dispatcher: publicDispatcher,
         headers: {
           Accept: "text/html,text/plain,application/xhtml+xml;q=0.9,*/*;q=0.1",
           "User-Agent": "FreshFactEvidenceBot/1.0 (+https://fresh-fact.onrender.com)",
         },
       });
-    } finally {
+    } catch (error) {
       clearTimeout(timeout);
+      throw error;
     }
 
     const fetchMs = Date.now() - started;
@@ -164,14 +187,17 @@ async function fetchPublicText(initialUrl) {
       const location = response.headers.get("location");
 
       if (!location) {
+        clearTimeout(timeout);
         throw new Error("REDIRECT_WITHOUT_LOCATION");
       }
 
       if (hop >= MAX_REDIRECTS) {
+        clearTimeout(timeout);
         throw new Error("TOO_MANY_REDIRECTS");
       }
 
       const next = new URL(location, current);
+      clearTimeout(timeout);
       await assertPublicUrl(next.toString());
 
       redirectChain.push({
@@ -192,6 +218,7 @@ async function fetchPublicText(initialUrl) {
       !contentType.includes("text/plain") &&
       !contentType.includes("application/xhtml+xml")
     ) {
+      clearTimeout(timeout);
       throw new Error("UNSUPPORTED_CONTENT_TYPE");
     }
 
@@ -203,16 +230,25 @@ async function fetchPublicText(initialUrl) {
       Number.isFinite(declaredLength) &&
       declaredLength > MAX_BYTES
     ) {
+      clearTimeout(timeout);
       throw new Error("CONTENT_TOO_LARGE");
     }
 
-    const buffer = Buffer.from(
-      await response.arrayBuffer()
-    );
-
-    if (buffer.length > MAX_BYTES) {
-      throw new Error("CONTENT_TOO_LARGE");
+    const chunks = [];
+    let received = 0;
+    try {
+      for await (const chunk of response.body) {
+        received += chunk.length;
+        if (received > MAX_BYTES) {
+          await response.body.cancel().catch(() => {});
+          throw new Error("CONTENT_TOO_LARGE");
+        }
+        chunks.push(chunk);
+      }
+    } finally {
+      clearTimeout(timeout);
     }
+    const buffer = Buffer.concat(chunks);
 
     return {
       response,
@@ -410,7 +446,7 @@ async function start() {
   });
 
   app.get("/robots.txt", (req, res) => {
-    res.type("text/plain").send("User-agent: *\\nAllow: /\\n");
+    res.type("text/plain").send("User-agent: *\nAllow: /\n");
   });
 
   app.get("/health", (req, res) => {
