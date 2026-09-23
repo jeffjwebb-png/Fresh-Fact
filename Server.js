@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const dns = require("dns").promises;
 const net = require("net");
 const { Agent } = require("undici");
+const { validateSources, validateClaim, validateQuery, evidenceFromPage, searchWikipedia } = require("./products");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -348,6 +349,40 @@ async function start() {
     },
   });
 
+  const verifyDiscovery = declareDiscoveryExtension({
+    method: "POST",
+    bodyType: "json",
+    input: { claim: "A sample claim to check against supplied sources", urls: ["https://example.com"] },
+    inputSchema: {
+      type: "object",
+      properties: {
+        claim: { type: "string", minLength: 8, maxLength: 300 },
+        urls: { type: "array", minItems: 1, maxItems: 3, items: { type: "string" } },
+      },
+      required: ["claim", "urls"],
+    },
+    output: {
+      type: "json",
+      example: { service: "FreshFact Verify", assessment: "related_passages_found", sources: [] },
+      schema: { type: "object", properties: {
+        service: { type: "string" }, assessment: { type: "string" }, sources: { type: "array" },
+      }, required: ["service", "assessment", "sources"] },
+    },
+  });
+
+  const researchDiscovery = declareDiscoveryExtension({
+    method: "POST",
+    bodyType: "json",
+    input: { query: "solar power" },
+    inputSchema: { type: "object", properties: {
+      query: { type: "string", minLength: 3, maxLength: 300 },
+    }, required: ["query"] },
+    output: { type: "json", example: { service: "FreshFact Research", scope: "English Wikipedia", sources: [] },
+      schema: { type: "object", properties: {
+        service: { type: "string" }, scope: { type: "string" }, sources: { type: "array" },
+      }, required: ["service", "scope", "sources"] } },
+  });
+
   const routes = {
     "GET /api/evidence": {
       accepts: {
@@ -363,6 +398,18 @@ async function start() {
       serviceName: "FreshFact Evidence",
       tags: ["web", "evidence", "freshness", "research", "agents"],
       extensions: evidenceDiscovery,
+    },
+    "POST /api/verify": {
+      accepts: { scheme: "exact", price: "$0.03", network: "eip155:8453", payTo, maxTimeoutSeconds: 300 },
+      description: "Compare a claim with 1 to 3 public source URLs. Return related passages, source URLs, retrieval timestamps and content hashes. Lexical relevance is not a truth verdict.",
+      mimeType: "application/json", serviceName: "FreshFact Verify",
+      tags: ["evidence", "claim", "source", "verification", "agents"], extensions: verifyDiscovery,
+    },
+    "POST /api/research": {
+      accepts: { scheme: "exact", price: "$0.05", network: "eip155:8453", payTo, maxTimeoutSeconds: 300 },
+      description: "Search English Wikipedia for a query and retrieve up to 3 pages with related passages, source URLs, retrieval timestamps and content hashes. Wikipedia-only coverage; no current web or truth guarantees.",
+      mimeType: "application/json", serviceName: "FreshFact Research",
+      tags: ["research", "wikipedia", "evidence", "agents"], extensions: researchDiscovery,
     },
   };
 
@@ -383,6 +430,28 @@ async function start() {
     });
 
     next();
+  });
+
+  app.use(express.json({ limit: "16kb", type: "application/json" }));
+
+  app.post(["/api/verify", "/api/research"], async (req, res, next) => {
+    try {
+      if (req.path === "/api/verify") {
+        req.validatedClaim = validateClaim(req.body?.claim);
+        req.validatedUrls = validateSources(req.body?.urls);
+        await Promise.all(req.validatedUrls.map((url) => assertPublicUrl(url)));
+      } else {
+        req.validatedQuery = validateQuery(req.body?.query);
+      }
+      next();
+    } catch (error) {
+      const invalid = ["INVALID_URL", "UNSUPPORTED_PROTOCOL", "PRIVATE_TARGET"].includes(error.message) ||
+        error.message.startsWith("Provide ");
+      res.status(invalid ? 400 : 502).json({
+        error: invalid ? "INVALID_INPUT" : "SOURCE_UNAVAILABLE",
+        message: invalid ? error.message : "Could not validate source availability.",
+      });
+    }
   });
 
   app.get("/", (req, res) => {
@@ -409,6 +478,10 @@ async function start() {
 
   <h2>Paid endpoint</h2>
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
+
+  <h2>More agent products</h2>
+  <p><strong>FreshFact Verify · $0.03:</strong> POST /api/verify with JSON {"claim":"...","urls":["https://example.com"]}. Returns relevant passages and source fingerprints. It does not make a truth determination.</p>
+  <p><strong>FreshFact Research · $0.05:</strong> POST /api/research with JSON {"query":"..."}. Searches English Wikipedia and retrieves up to three pages. It does not search the live web.</p>
 
   <h2>What you receive</h2>
   <ul>
@@ -456,6 +529,9 @@ GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
 Price: $0.01 USDC
 Network: Base mainnet (eip155:8453)
 
+POST ${baseUrl}/api/verify with {"claim":"...","urls":["https://example.com"]}: $0.03 USDC. Finds related passages in supplied public pages. Passage overlap is not verification of truth.
+POST ${baseUrl}/api/research with {"query":"..."}: $0.05 USDC. Searches English Wikipedia only and retrieves up to three pages; not current-web search.
+
 Returns clean page text plus title, description, canonical URL, published/modified dates when available, HTTP freshness headers, redirect chain, word count, SHA-256 content hash, source URL and retrieval timestamp.
 
 ## Discovery
@@ -501,6 +577,8 @@ ${baseUrl}/.well-known/x402-catalog.json
             "retrieval timestamp",
           ],
         },
+        { method: "POST", url: `${baseUrl}/api/verify`, price: "$0.03", input: { claim: "Required claim", urls: "1 to 3 public URLs" }, output: ["source passages", "retrieval timestamp", "content hash", "lexical assessment"] },
+        { method: "POST", url: `${baseUrl}/api/research`, price: "$0.05", input: { query: "Required query; English Wikipedia only" }, output: ["up to three article sources", "related passages", "retrieval timestamps", "content hashes"] },
       ],
       docs: `${baseUrl}/openapi.json`,
       llms: `${baseUrl}/llms.txt`,
@@ -510,7 +588,7 @@ ${baseUrl}/.well-known/x402-catalog.json
   // Compatibility discovery document consumed by x402scan and other crawlers.
   app.get("/.well-known/x402", (req, res) => {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
-    res.json({ version: 1, resources: [`${baseUrl}/api/evidence`] });
+    res.json({ version: 1, resources: [`${baseUrl}/api/evidence`, `${baseUrl}/api/verify`, `${baseUrl}/api/research`] });
   });
 
   app.get("/openapi.json", (req, res) => {
@@ -599,11 +677,82 @@ ${baseUrl}/.well-known/x402-catalog.json
             },
           },
         },
+        "/api/verify": {
+          post: {
+            summary: "Find passages related to a claim in supplied source URLs",
+            description: "Lexical matches do not establish whether a claim is true or supported; inspect the cited passage.",
+            security: [{ x402Payment: [] }],
+            "x-payment-info": { protocols: ["x402"], price: { mode: "fixed", currency: "USD", amount: "0.03" }, network: "eip155:8453", asset: "USDC" },
+            requestBody: { required: true, content: { "application/json": { schema: { type: "object", properties: {
+              claim: { type: "string", minLength: 8, maxLength: 300 },
+              urls: { type: "array", minItems: 1, maxItems: 3, items: { type: "string", format: "uri" } },
+            }, required: ["claim", "urls"] } } } },
+            responses: { "200": { description: "Source evidence and related passages" }, "400": { description: "Invalid input" }, "402": { description: "Payment required via x402" }, "502": { description: "Source unavailable" } },
+          },
+        },
+        "/api/research": {
+          post: {
+            summary: "Search English Wikipedia and retrieve up to three source pages",
+            description: "Coverage is limited to English Wikipedia. Results are not a live-web search or a truth verdict.",
+            security: [{ x402Payment: [] }],
+            "x-payment-info": { protocols: ["x402"], price: { mode: "fixed", currency: "USD", amount: "0.05" }, network: "eip155:8453", asset: "USDC" },
+            requestBody: { required: true, content: { "application/json": { schema: { type: "object", properties: {
+              query: { type: "string", minLength: 3, maxLength: 300 },
+            }, required: ["query"] } } } },
+            responses: { "200": { description: "Wikipedia results with related passages" }, "400": { description: "Invalid input" }, "402": { description: "Payment required via x402" }, "502": { description: "Search or source unavailable" } },
+          },
+        },
       },
     });
   });
 
   app.use(paymentMiddleware(routes, resourceServer));
+
+  async function readEvidencePage(url) {
+    const fetched = await fetchPublicText(url);
+    if (!fetched.response.ok) throw new Error("SOURCE_HTTP_ERROR");
+    const $ = load(fetched.body);
+    const title = $("title").first().text().trim() || null;
+    $("script,style,noscript,svg,canvas,template").remove();
+    const text = collapseWhitespace($("main").first().text() || $("article").first().text() || $("body").text()).slice(0, MAX_CHARS);
+    return { finalUrl: fetched.finalUrl, retrievedAt: new Date().toISOString(), title, text };
+  }
+
+  app.post("/api/verify", async (req, res) => {
+    try {
+      const pages = await Promise.all(req.validatedUrls.map(readEvidencePage));
+      const sources = pages.map((page) => evidenceFromPage(page, req.validatedClaim));
+      res.json({
+        service: "FreshFact Verify", version: "1.0.0", claim: req.validatedClaim,
+        assessment: sources.some((source) => source.passages.length) ? "related_passages_found" : "no_matching_passages",
+        scope: "Supplied URLs only; lexical matching, not semantic fact checking.",
+        sources,
+        note: "Related passages may contradict or merely mention the claim. Read each source before treating it as support.",
+      });
+    } catch (error) {
+      console.error("Verify source retrieval error:", error);
+      res.status(502).json({ error: "SOURCE_UNAVAILABLE", message: "Could not retrieve all supplied sources." });
+    }
+  });
+
+  app.post("/api/research", async (req, res) => {
+    try {
+      const urls = await searchWikipedia(req.validatedQuery);
+      const results = await Promise.allSettled(urls.map(readEvidencePage));
+      const sources = results.filter((result) => result.status === "fulfilled")
+        .map((result) => evidenceFromPage(result.value, req.validatedQuery));
+      if (!sources.length && urls.length) throw new Error("SOURCE_UNAVAILABLE");
+      res.json({
+        service: "FreshFact Research", version: "1.0.0", query: req.validatedQuery,
+        scope: "English Wikipedia only", searchedAt: new Date().toISOString(),
+        sources, unavailableSourceCount: results.length - sources.length,
+        note: "Passages are lexical matches, not a truth assessment. Wikipedia coverage and article update times vary.",
+      });
+    } catch (error) {
+      console.error("Research retrieval error:", error);
+      res.status(502).json({ error: "RESEARCH_UNAVAILABLE", message: "Could not complete Wikipedia research." });
+    }
+  });
 
   app.get("/api/evidence", async (req, res) => {
     const requestedUrl =
