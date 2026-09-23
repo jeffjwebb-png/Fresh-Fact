@@ -648,8 +648,6 @@ ${baseUrl}/.well-known/x402-catalog.json
 
       const $ = load(body);
 
-      $("script,style,noscript,svg,canvas,template").remove();
-
       const title = firstNonEmpty([
         $("meta[property='og:title']").attr("content"),
         $("meta[name='twitter:title']").attr("content"),
@@ -709,6 +707,8 @@ ${baseUrl}/.well-known/x402-catalog.json
           // Ignore malformed JSON-LD.
         }
       });
+
+      $("script,style,noscript,svg,canvas,template").remove();
 
       const bodyText =
         collapseWhitespace(
