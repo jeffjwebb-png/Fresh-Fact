@@ -795,6 +795,14 @@ ${baseUrl}/.well-known/x402-catalog.json
         contentType,
       } = fetched;
 
+      if (!response.ok) {
+        return res.status(502).json({
+          error: "SOURCE_HTTP_ERROR",
+          message: "The source returned an error instead of a usable page.",
+          sourceHttpStatus: response.status,
+        });
+      }
+
       const $ = load(body);
 
       const title = firstNonEmpty([
