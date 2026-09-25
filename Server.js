@@ -424,23 +424,23 @@ async function start() {
         maxTimeoutSeconds: 300,
       },
       description:
-        "FreshFact Evidence: retrieve a public web page as clean machine-readable evidence with freshness metadata, content hash, source URL, redirects, page metadata and extracted text.",
+        "Fetch a public web page at request time and return verifiable evidence: extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the exact text retrieved. Use when an agent must later prove what a page said, not merely what it says now. Priced $0.002 per call in USDC on Base. Returns 502 with no charge if the source cannot be retrieved; the response carries no truth verdict about the page contents.",
       mimeType: "application/json",
       serviceName: "FreshFact Evidence",
-      tags: ["web", "evidence", "freshness", "research", "agents"],
+      tags: ["web", "evidence", "freshness", "research", "agents", "provenance", "audit", "verification", "retrieval", "fetch"],
       extensions: evidenceDiscovery,
     },
     "POST /api/verify": {
       accepts: { scheme: "exact", price: "$0.03", network: "eip155:8453", payTo, maxTimeoutSeconds: 300 },
-      description: "Compare a claim with 1 to 3 public source URLs. Return related passages, source URLs, retrieval timestamps and content hashes. Lexical relevance is not a truth verdict.",
+      description: "Given a claim and one to three public source URLs, retrieve those pages and return passages that share significant terms with the claim, each with its source URL, retrieval timestamp, and a SHA-256 content hash. Returns lexical term overlap only: termCoverage is not a truth verdict, and a returned passage may contradict the claim. Use to locate citable passages, not to adjudicate. Priced $0.03 per call in USDC on Base.",
       mimeType: "application/json", serviceName: "FreshFact Verify",
-      tags: ["evidence", "claim", "source", "verification", "agents"], extensions: verifyDiscovery,
+      tags: ["evidence", "claim", "source", "verification", "agents", "provenance", "passages", "citations"], extensions: verifyDiscovery,
     },
     "POST /api/research": {
       accepts: { scheme: "exact", price: "$0.05", network: "eip155:8453", payTo, maxTimeoutSeconds: 300 },
-      description: "Search English Wikipedia for a query and retrieve up to 3 pages with related passages, source URLs, retrieval timestamps and content hashes. Wikipedia-only coverage; no current web or truth guarantees.",
+      description: "Search English Wikipedia for a query and retrieve up to three matching pages, returning related passages with source URLs, retrieval timestamps, and SHA-256 content hashes. Coverage is English Wikipedia only: this is not a live-web search and returns no truth verdict. Use when an agent needs Wikipedia-sourced passages with provenance attached. Priced $0.05 per call in USDC on Base.",
       mimeType: "application/json", serviceName: "FreshFact Research",
-      tags: ["research", "wikipedia", "evidence", "agents"], extensions: researchDiscovery,
+      tags: ["research", "wikipedia", "evidence", "agents", "provenance", "passages", "citations"], extensions: researchDiscovery,
     },
   };
 
@@ -545,14 +545,10 @@ async function start() {
 </html>`);
   });
 
-  app.get("/robots.txt", (req, res) => {
-    res.type("text/plain").send("User-agent: *\nAllow: /\n");
-  });
-
   app.get("/health", (req, res) => {
     res.json({
-      ok: true,
-      service: "FreshFact",
+      status: "ok",
+      service: "FreshFact Evidence",
       product: "FreshFact Evidence",
       timestamp: new Date().toISOString(),
     });
@@ -673,29 +669,21 @@ ${baseUrl}/.well-known/x402-catalog.json
                 name: "url",
                 in: "query",
                 required: true,
-                schema: {
-                  type: "string",
-                  format: "uri",
-                  example:
-                    "https://example.com",
-                },
+                schema: { type: "string", format: "uri" },
+                description: "Public HTTP or HTTPS URL to retrieve.",
               },
               {
                 name: "maxChars",
                 in: "query",
                 required: false,
-                schema: {
-                  type: "integer",
-                  minimum: 1000,
-                  maximum: MAX_CHARS,
-                  default: DEFAULT_MAX_CHARS,
-                },
+                schema: { type: "integer", minimum: 1000, maximum: 50000, default: 30000 },
+                description: "Maximum extracted text characters.",
               },
             ],
             responses: {
               "200": {
                 description:
-                  "Paid evidence response",
+                  "Clean evidence with provenance and integrity hash",
               },
               "400": {
                 description:
@@ -838,182 +826,119 @@ ${baseUrl}/.well-known/x402-catalog.json
         contentType,
       } = fetched;
 
-      if (!response.ok) {
-        return res.status(502).json({
-          error: "SOURCE_HTTP_ERROR",
-          message: "The source returned an error instead of a usable page.",
-          sourceHttpStatus: response.status,
-        });
-      }
-
       const $ = load(body);
 
-      const title = firstNonEmpty([
-        $("meta[property='og:title']").attr("content"),
-        $("meta[name='twitter:title']").attr("content"),
-        $("title").first().text(),
-      ]);
+      const title =
+        $("title").first().text().trim() ||
+        firstNonEmpty([
+          $('meta[property="og:title"]').attr("content"),
+          $('meta[name="twitter:title"]').attr("content"),
+        ]);
 
       const description = firstNonEmpty([
-        $("meta[property='og:description']").attr("content"),
-        $("meta[name='description']").attr("content"),
-        $("meta[name='twitter:description']").attr("content"),
+        $('meta[name="description"]').attr("content"),
+        $('meta[property="og:description"]').attr("content"),
       ]);
 
-      const canonicalRaw = firstNonEmpty([
-        $("link[rel='canonical']").attr("href"),
-        $("meta[property='og:url']").attr("content"),
+      const canonicalUrl = firstNonEmpty([
+        $('link[rel="canonical"]').attr("href"),
       ]);
 
-      let canonicalUrl = null;
+      const published =
+        toIsoOrNull(
+          firstNonEmpty([
+            $('meta[property="article:published_time"]').attr("content"),
+            $("time[datetime]").first().attr("datetime"),
+          ])
+        );
 
-      if (canonicalRaw) {
-        try {
-          canonicalUrl =
-            new URL(
-              canonicalRaw,
-              finalUrl
-            ).toString();
-        } catch {
-          canonicalUrl = null;
-        }
-      }
-
-      const publishedRaw = firstNonEmpty([
-        $("meta[property='article:published_time']").attr("content"),
-        $("meta[name='date']").attr("content"),
-        $("meta[name='pubdate']").attr("content"),
-        $("time[datetime]").first().attr("datetime"),
-      ]);
-
-      const modifiedRaw = firstNonEmpty([
-        $("meta[property='article:modified_time']").attr("content"),
-        $("meta[name='last-modified']").attr("content"),
-      ]);
-
-      const jsonLd = [];
-
-      $("script[type='application/ld+json']").each((_, element) => {
-        if (jsonLd.length >= 10) return;
-
-        const raw = $(element).text().trim();
-
-        if (!raw) return;
-
-        try {
-          const parsed = JSON.parse(raw);
-          jsonLd.push(parsed);
-        } catch {
-          // Ignore malformed JSON-LD.
-        }
-      });
+      const modified =
+        toIsoOrNull(
+          firstNonEmpty([
+            $('meta[property="article:modified_time"]').attr("content"),
+          ])
+        );
 
       $("script,style,noscript,svg,canvas,template").remove();
 
-      const bodyText =
-        collapseWhitespace(
-          $("main").first().text() ||
-          $("article").first().text() ||
-          $("body").text()
-        );
-
-      const text =
-        bodyText.slice(0, maxChars);
+      const text = collapseWhitespace(
+        $("main").first().text() ||
+        $("article").first().text() ||
+        $("body").text()
+      ).slice(0, maxChars);
 
       const wordCount =
-        text.length === 0
-          ? 0
-          : text.split(/\s+/).length;
+        text ? text.split(/\s+/).filter(Boolean).length : 0;
 
-      const contentHashSha256 =
-        crypto
-          .createHash("sha256")
-          .update(text, "utf8")
-          .digest("hex");
-
-      const retrievedAt =
-        new Date().toISOString();
-
-      return res.json({
+      res.json({
         service: "FreshFact Evidence",
         version: "1.0.0",
-
         source: {
           requestedUrl,
           finalUrl,
-          canonicalUrl,
           httpStatus: response.status,
           contentType,
-          bytesFetched: bytes,
           redirectChain,
         },
-
         freshness: {
-          retrievedAt,
-          fetchMs,
-          etag:
-            response.headers.get("etag"),
+          retrievedAt: new Date().toISOString(),
+          etag: response.headers.get("etag") || null,
           lastModified:
-            response.headers.get(
-              "last-modified"
-            ),
-          cacheControl:
-            response.headers.get(
-              "cache-control"
-            ),
-          date:
-            response.headers.get("date"),
+            response.headers.get("last-modified") || null,
+          ageSeconds:
+            response.headers.get("age") === null
+              ? null
+              : Number(response.headers.get("age")),
         },
-
+        integrity: {
+          algorithm: "sha256",
+          contentHash: crypto
+            .createHash("sha256")
+            .update(text, "utf8")
+            .digest("hex"),
+        },
         page: {
           title,
           description,
-          language:
-            $("html").attr("lang") || null,
-          publishedAt:
-            toIsoOrNull(publishedRaw),
-          modifiedAt:
-            toIsoOrNull(modifiedRaw),
-          wordCount,
-          truncated:
-            bodyText.length > text.length,
-          maxChars,
+          canonicalUrl,
+          published,
+          modified,
         },
-
-        integrity: {
-          algorithm: "sha256",
-          contentHash: contentHashSha256,
-          scope:
-            "normalized extracted text returned in data.text",
-        },
-
-        structuredData: {
-          jsonLdCount: jsonLd.length,
-          jsonLd,
-        },
-
         data: {
           text,
+          wordCount,
+          bytesReceived: bytes,
+          fetchMs,
+          truncated: text.length >= maxChars,
         },
-
-        note:
-          "FreshFact reports evidence retrieved from the supplied public URL at request time. The source remains authoritative.",
       });
     } catch (error) {
-      const code = error?.message || "FETCH_FAILED";
+      const code = error.message;
+
+      if (code === "MISSING_URL") {
+        return res.status(400).json({
+          error: code,
+          message: "A public URL is required.",
+        });
+      }
 
       if (
-        [
-          "INVALID_URL",
-          "UNSUPPORTED_PROTOCOL",
-          "PRIVATE_TARGET",
-          "DNS_LOOKUP_FAILED",
-        ].includes(code)
+        code === "INVALID_URL" ||
+        code === "UNSUPPORTED_PROTOCOL" ||
+        code === "PRIVATE_TARGET"
       ) {
         return res.status(400).json({
           error: code,
           message:
-            "FreshFact only retrieves publicly routable HTTP/HTTPS URLs.",
+            "The URL must be a public HTTP or HTTPS address.",
+        });
+      }
+
+      if (code === "UNSUPPORTED_CONTENT_TYPE") {
+        return res.status(415).json({
+          error: code,
+          message:
+            "FreshFact Evidence currently supports HTML and plain-text sources.",
         });
       }
 
@@ -1022,16 +947,6 @@ ${baseUrl}/.well-known/x402-catalog.json
           error: code,
           message:
             "Source content exceeded the 2 MB FreshFact retrieval limit.",
-        });
-      }
-
-      if (
-        code === "UNSUPPORTED_CONTENT_TYPE"
-      ) {
-        return res.status(415).json({
-          error: code,
-          message:
-            "FreshFact Evidence currently supports HTML and plain-text sources.",
         });
       }
 
