@@ -175,7 +175,7 @@ function paymentTelemetry(req, statusCode) {
 
   return {
     paymentPresented: true,
-    paymentSucceeded: statusCode >= 200 && statusCode < 300,
+    deliverySucceeded: statusCode >= 200 && statusCode < 300,
     ...(payerFingerprint ? { payerFingerprint } : {}),
   };
 }
@@ -418,13 +418,13 @@ async function start() {
     "GET /api/evidence": {
       accepts: {
         scheme: "exact",
-        price: "$0.002",
+        price: "$0.01",
         network: "eip155:8453",
         payTo,
         maxTimeoutSeconds: 300,
       },
       description:
-        "Fetch a public web page at request time and return verifiable evidence: extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the exact text retrieved. Use when an agent must later prove what a page said, not merely what it says now. Priced $0.002 per call in USDC on Base. Returns 502 with no charge if the source cannot be retrieved; the response carries no truth verdict about the page contents.",
+        "Fetch a public web page and return extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. Priced $0.01 per call in USDC on Base. Retrieval can fail after payment; the response carries no truth verdict about the page contents.",
       mimeType: "application/json",
       serviceName: "FreshFact Evidence",
       tags: ["web", "evidence", "freshness", "research", "agents", "provenance", "audit", "verification", "retrieval", "fetch"],
@@ -517,7 +517,7 @@ async function start() {
   <h1>FreshFact Evidence</h1>
   <p>Fresh web evidence for AI agents and software.</p>
   <p>Give FreshFact a public URL and receive clean extracted text, provenance, freshness signals, metadata and an integrity hash in machine-readable JSON.</p>
-  <p class="price">$0.002 USDC per successful request · Base mainnet · x402</p>
+  <p class="price">$0.01 USDC per request · Base mainnet · x402</p>
 
   <h2>Paid endpoint</h2>
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
@@ -565,7 +565,7 @@ FreshFact sells fresh web evidence to software agents over x402.
 ## Paid endpoint
 GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
 
-Price: $0.002 USDC
+Price: $0.01 USDC
 Network: Base mainnet (eip155:8453)
 
 POST ${baseUrl}/api/verify with {"claim":"...","urls":["https://example.com"]}: $0.03 USDC. Finds related passages in supplied public pages. Passage overlap is not verification of truth.
@@ -595,7 +595,7 @@ ${baseUrl}/.well-known/x402-catalog.json
         {
           method: "GET",
           url: `${baseUrl}/api/evidence`,
-          price: "$0.002",
+          price: "$0.01",
           input: {
             url:
               "Required public HTTP/HTTPS URL",
@@ -660,7 +660,7 @@ ${baseUrl}/.well-known/x402-catalog.json
             security: [{ x402Payment: [] }],
             "x-payment-info": {
               protocols: ["x402"],
-              price: { mode: "fixed", currency: "USD", amount: "0.002" },
+              price: { mode: "fixed", currency: "USD", amount: "0.01" },
               network: "eip155:8453",
               asset: "USDC",
             },
@@ -755,7 +755,7 @@ ${baseUrl}/.well-known/x402-catalog.json
       catalog: "/.well-known/x402-catalog.json",
     },
     products: [
-      { method: "GET", path: "/api/evidence", price: "0.002" },
+      { method: "GET", path: "/api/evidence", price: "0.01" },
       { method: "POST", path: "/api/verify", price: "0.03" },
       { method: "POST", path: "/api/research", price: "0.05" },
     ],
@@ -865,6 +865,14 @@ ${baseUrl}/.well-known/x402-catalog.json
         bytes,
         contentType,
       } = fetched;
+
+      if (!response.ok) {
+        return res.status(502).json({
+          error: "SOURCE_HTTP_ERROR",
+          message: "The source returned an error instead of a usable page.",
+          sourceHttpStatus: response.status,
+        });
+      }
 
       const $ = load(body);
 
