@@ -1,7 +1,7 @@
 {
   "name": "@jeffjwebb/freshfact-mcp",
   "version": "1.0.0",
-  "description": "MCP server for FreshFact Evidence: fetch a public web page and return verifiable evidence with provenance, retrieval timestamp and a SHA-256 content hash. Pay-per-request in USDC on Base via x402.",
+  "description": "MCP server for FreshFact Evidence: fetch a public web page and return extracted page text with provenance, retrieval timestamp and a SHA-256 content hash. Pay-per-request in USDC on Base via x402.",
   "license": "MIT",
   "type": "module",
   "bin": {
