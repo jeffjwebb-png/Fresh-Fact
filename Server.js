@@ -466,6 +466,17 @@ async function start() {
 
   app.use(express.json({ limit: "16kb", type: "application/json" }));
 
+  app.use((error, req, res, next) => {
+    if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
+      return res.status(400).json({
+        error: "INVALID_JSON",
+        message: "Request body must be valid JSON.",
+      });
+    }
+
+    next(error);
+  });
+
   app.post(["/api/verify", "/api/research"], async (req, res, next) => {
     try {
       if (req.path === "/api/verify") {
