@@ -2,7 +2,7 @@
 
 An MCP server that exposes [FreshFact](https://fresh-fact.onrender.com) as tools, so MCP-compatible clients — Claude Desktop, Cursor, and others — can discover and call it.
 
-FreshFact fetches a public web page at request time and returns verifiable evidence: the extracted text, the final URL, the HTTP status, the retrieval timestamp, the redirect chain, and a SHA-256 hash of the exact text retrieved. It answers *what did this page say, and can I prove it later* — the question that matters when an agent's output gets disputed, audited, or replayed after a page has changed.
+FreshFact fetches a public web page and returns extracted text, the final URL, the HTTP status, the retrieval timestamp, the redirect chain, and a SHA-256 hash of the returned text. These fields alone do not prove the source was authentic or unchanged.
 
 Payment is per request in USDC on Base, via [x402](https://x402.org). No account and no API key.
 
@@ -10,7 +10,7 @@ Payment is per request in USDC on Base, via [x402](https://x402.org). No account
 
 | Tool | What it does | Price |
 | --- | --- | ---: |
-| `freshfact_evidence` | Fetch a public page and return its text with provenance and integrity hash | $0.002 |
+| `freshfact_evidence` | Fetch a public page and return its text with provenance and integrity hash | $0.01 |
 | `freshfact_verify` | Find passages in one to three supplied URLs that share terms with a claim | $0.03 |
 | `freshfact_research` | Search English Wikipedia and retrieve up to three pages with related passages | $0.05 |
 
