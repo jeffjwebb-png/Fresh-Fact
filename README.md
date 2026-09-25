@@ -12,7 +12,20 @@ All endpoints use x402 v2, Base mainnet USDC, and the configured `FRESHFACT_PAY_
 
 Verify and Research return `termCoverage` for matching passages; that number measures overlap with query words, not confidence that the passage supports a claim. A passage may contradict the query. Their SHA-256 hashes cover the normalized text used to find passages. Each fetched page has a 2 MB transfer limit, a 50,000-character text limit, and a ten-second timeout per hop. Failed retrieval after payment returns 502; upstream availability is not guaranteed.
 
-OpenAPI, `llms.txt`, `/.well-known/x402-catalog.json`, and `/.well-known/x402` advertise these products. The new products still need real paid end-to-end checks with owner authorization; unpaid 402 checks validate only payment discovery, not paid fulfillment.
+OpenAPI, `llms.txt`, `/.well-known/x402-catalog.json`, and `/.well-known/x402` advertise these products.
+
+## Paid path status
+
+The x402 payment flow — 402 challenge, payment, settlement, and paid fulfillment — is verified end to end by owner test transactions on Base mainnet. Those transactions came from the project owner's own wallet and settled into the project's own receiving wallet; they confirm the integration works, not that a market exists.
+
+No independent paid call has occurred yet. The open commercial milestones are:
+1. first independent paid call;
+2. first repeat independent buyer;
+3. 100 external paid calls;
+4. 10 distinct external payers;
+5. then test pricing and distribution economics.
+
+Only after those signals should FreshFact invest in more upstream data, paid acquisition, complex accounts, or a larger feature set.
 
 ## Distribution targets
 
@@ -27,13 +40,6 @@ Potential distribution indexes:
 
 > FreshFact Evidence retrieves a public web page at request time and returns clean machine-readable evidence with source provenance, freshness headers, retrieval timestamp, metadata, redirect history, and a SHA-256 integrity hash. Pay $0.002 USDC on Base per request through x402.
 
-### Commercial validation gate
+### Note on listing
 
-Do not equate listing with demand. The next commercial milestones are:
-1. first independent paid call;
-2. first repeat independent buyer;
-3. 100 external paid calls;
-4. 10 distinct external payers;
-5. then test pricing and distribution economics.
-
-Only after those signals should FreshFact invest in more upstream data, paid acquisition, complex accounts, or a larger feature set.
+Do not equate listing with demand. Listing generates no traffic on its own; the milestones above are the only signals that count.
