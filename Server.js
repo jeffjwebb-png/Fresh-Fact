@@ -737,6 +737,46 @@ ${baseUrl}/.well-known/x402-catalog.json
     });
   });
 
+  // Probing agents read the 402 body before paying. The PAYMENT-REQUIRED
+  // header remains authoritative for x402 clients and is not modified here;
+  // this only adds a readable quote alongside it, and only when the payment
+  // middleware has produced an empty body.
+  const PAYMENT_QUOTE = {
+    error: "PAYMENT_REQUIRED",
+    message:
+      "This endpoint is paid per request via x402. Retry with a PAYMENT-SIGNATURE header carrying proof of payment.",
+    currency: "USDC",
+    asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    network: "eip155:8453",
+    paymentHeader: "PAYMENT-SIGNATURE",
+    discovery: {
+      llms: "/llms.txt",
+      openapi: "/openapi.json",
+      catalog: "/.well-known/x402-catalog.json",
+    },
+    products: [
+      { method: "GET", path: "/api/evidence", price: "0.002" },
+      { method: "POST", path: "/api/verify", price: "0.03" },
+      { method: "POST", path: "/api/research", price: "0.05" },
+    ],
+  };
+
+  app.use((req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = (payload) => {
+      const isEmptyObject =
+        payload &&
+        typeof payload === "object" &&
+        !Array.isArray(payload) &&
+        Object.keys(payload).length === 0;
+      if (res.statusCode === 402 && isEmptyObject) {
+        return originalJson(PAYMENT_QUOTE);
+      }
+      return originalJson(payload);
+    };
+    next();
+  });
+
   app.use(paymentMiddleware(routes, resourceServer));
 
   async function readEvidencePage(url) {
