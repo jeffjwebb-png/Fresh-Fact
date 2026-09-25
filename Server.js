@@ -14,6 +14,7 @@ const DEFAULT_MAX_CHARS = 30000;
 const MAX_CHARS = 50000;
 const FETCH_TIMEOUT_MS = 10000;
 const MAX_REDIRECTS = 5;
+const PAID_PATHS = new Set(["/api/evidence", "/api/verify", "/api/research"]);
 // Validate the address used by the socket itself, including after DNS changes.
 const publicDispatcher = new Agent({
   connect: {
@@ -147,6 +148,36 @@ function toIsoOrNull(value) {
   const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp)) return null;
   return new Date(timestamp).toISOString();
+}
+
+function paymentTelemetry(req, statusCode) {
+  if (!PAID_PATHS.has(req.path)) return {};
+
+  const encoded = req.get("PAYMENT-SIGNATURE") || req.get("X-PAYMENT");
+  if (!encoded) return { paymentPresented: false };
+
+  let payerFingerprint = null;
+
+  try {
+    const payment = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+    const payer = payment?.payload?.authorization?.from;
+
+    if (typeof payer === "string" && /^0x[0-9a-f]{40}$/i.test(payer)) {
+      payerFingerprint = crypto
+        .createHash("sha256")
+        .update(payer.toLowerCase())
+        .digest("hex")
+        .slice(0, 16);
+    }
+  } catch {
+    // Payment middleware remains authoritative; telemetry must never affect a request.
+  }
+
+  return {
+    paymentPresented: true,
+    paymentSucceeded: statusCode >= 200 && statusCode < 300,
+    ...(payerFingerprint ? { payerFingerprint } : {}),
+  };
 }
 
 async function fetchPublicText(initialUrl) {
@@ -387,7 +418,7 @@ async function start() {
     "GET /api/evidence": {
       accepts: {
         scheme: "exact",
-        price: "$0.01",
+        price: "$0.002",
         network: "eip155:8453",
         payTo,
         maxTimeoutSeconds: 300,
@@ -425,6 +456,7 @@ async function start() {
           status: res.statusCode,
           durationMs: Date.now() - started,
           at: new Date().toISOString(),
+          ...paymentTelemetry(req, res.statusCode),
         })
       );
     });
@@ -474,7 +506,7 @@ async function start() {
   <h1>FreshFact Evidence</h1>
   <p>Fresh web evidence for AI agents and software.</p>
   <p>Give FreshFact a public URL and receive clean extracted text, provenance, freshness signals, metadata and an integrity hash in machine-readable JSON.</p>
-  <p class="price">$0.01 USDC per successful request · Base mainnet · x402</p>
+  <p class="price">$0.002 USDC per successful request · Base mainnet · x402</p>
 
   <h2>Paid endpoint</h2>
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
@@ -526,7 +558,7 @@ FreshFact sells fresh web evidence to software agents over x402.
 ## Paid endpoint
 GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
 
-Price: $0.01 USDC
+Price: $0.002 USDC
 Network: Base mainnet (eip155:8453)
 
 POST ${baseUrl}/api/verify with {"claim":"...","urls":["https://example.com"]}: $0.03 USDC. Finds related passages in supplied public pages. Passage overlap is not verification of truth.
@@ -556,7 +588,7 @@ ${baseUrl}/.well-known/x402-catalog.json
         {
           method: "GET",
           url: `${baseUrl}/api/evidence`,
-          price: "$0.01",
+          price: "$0.002",
           input: {
             url:
               "Required public HTTP/HTTPS URL",
@@ -621,7 +653,7 @@ ${baseUrl}/.well-known/x402-catalog.json
             security: [{ x402Payment: [] }],
             "x-payment-info": {
               protocols: ["x402"],
-              price: { mode: "fixed", currency: "USD", amount: "0.01" },
+              price: { mode: "fixed", currency: "USD", amount: "0.002" },
               network: "eip155:8453",
               asset: "USDC",
             },
