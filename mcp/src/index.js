@@ -103,7 +103,8 @@ async function callFreshFact(path, init = {}) {
 
   if (!response.ok) {
     return {
-      paid: response.status !== 402,
+      paid: null,
+      paymentStatus: "unknown",
       ok: false,
       status: response.status,
       body: payload,
@@ -116,6 +117,7 @@ async function callFreshFact(path, init = {}) {
 /** Wrap a result as MCP text content. */
 function asContent(result) {
   return {
+    isError: result.ok !== true,
     content: [
       {
         type: "text",
@@ -132,7 +134,7 @@ const server = new McpServer({
 
 server.tool(
   "freshfact_evidence",
-  "Fetch a public web page and return verifiable evidence: extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the exact text retrieved. Use when you must later prove what a page said, not merely what it says now. Paid per call in USDC on Base via x402 ($0.002). Returns no verdict on whether the page content is true.",
+  "Fetch a public web page and return extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. Paid per call in USDC on Base via x402 ($0.01). Retrieval may fail after payment. Returns no verdict on whether the page content is true.",
   {
     url: z
       .string()
