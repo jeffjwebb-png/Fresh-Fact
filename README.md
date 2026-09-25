@@ -6,7 +6,7 @@ All endpoints use x402 v2, Base mainnet USDC, and the configured `FRESHFACT_PAY_
 
 | Product | Request | Price | Coverage |
 | --- | --- | ---: | --- |
-| Evidence | `GET /api/evidence?url=<public-url>` | $0.002 | One public HTML/plain-text URL; extracted text and source metadata. |
+| Evidence | `GET /api/evidence?url=<public-url>` | $0.01 | One public HTML/plain-text URL; extracted text and source metadata. |
 | Verify | `POST /api/verify` with `{"claim":"...","urls":["https://example.com"]}` | $0.03 | One to three supplied public URLs; passages sharing terms with the claim, retrieval time, content hash. No semantic truth verdict. |
 | Research | `POST /api/research` with `{"query":"..."}` | $0.05 | Search English Wikipedia and retrieve up to three matching pages. Wikipedia only; not a live-web search. |
 
@@ -16,7 +16,7 @@ OpenAPI, `llms.txt`, `/.well-known/x402-catalog.json`, and `/.well-known/x402` a
 
 ## Paid path status
 
-The x402 payment flow — 402 challenge, payment, settlement, and paid fulfillment — is verified end to end by owner test transactions on Base mainnet. Those transactions came from the project owner's own wallet and settled into the project's own receiving wallet; they confirm the integration works, not that a market exists.
+The original Evidence payment flow was exercised by eight owner test transactions on Base mainnet; paid fulfillment for the current Evidence release and the Verify and Research routes has not been independently confirmed. Those transactions came from the project owner's own wallet and settled into the project's own receiving wallet; they confirm the integration works, not that a market exists.
 
 No independent paid call has occurred yet. The open commercial milestones are:
 1. first independent paid call;
@@ -38,7 +38,7 @@ Potential distribution indexes:
 
 ### Listing description
 
-> FreshFact Evidence retrieves a public web page at request time and returns clean machine-readable evidence with source provenance, freshness headers, retrieval timestamp, metadata, redirect history, and a SHA-256 integrity hash. Pay $0.002 USDC on Base per request through x402.
+> FreshFact Evidence retrieves a public web page at request time and returns clean machine-readable evidence with source provenance, freshness headers, retrieval timestamp, metadata, redirect history, and a SHA-256 integrity hash. Pay $0.01 USDC on Base per request through x402.
 
 ### Note on listing
 
