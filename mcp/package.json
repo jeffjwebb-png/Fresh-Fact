@@ -1,0 +1,37 @@
+{
+  "name": "@jeffjwebb/freshfact-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for FreshFact Evidence: fetch a public web page and return verifiable evidence with provenance, retrieval timestamp and a SHA-256 content hash. Pay-per-request in USDC on Base via x402.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "freshfact-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "x402",
+    "evidence",
+    "provenance",
+    "agent",
+    "retrieval",
+    "verification"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "prepublishOnly": "node build.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "mcpName": "io.github.jeffjwebb-png/freshfact"
+}
