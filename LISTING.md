@@ -8,13 +8,13 @@ Copy for x402 Bazaar listing metadata, the directory listings, and the outreach 
 
 These replace the `description` and `serviceName` fields on each route in `Server.js`. Each is one sentence, front-loaded with the terms an agent or developer would search for, and ends with the failure posture.
 
-### Evidence — `GET /api/evidence` — $0.002
+### Evidence — `GET /api/evidence` — $0.01
 
 **serviceName:** `FreshFact Evidence`
 
 **description:**
 
-> Fetch a public web page at request time and return verifiable evidence: extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the exact text retrieved. Use when an agent must later prove what a page said, not merely what it says now. Priced $0.002 per call in USDC on Base. Returns 502 with no charge if the source cannot be retrieved; the response carries no truth verdict about the page's contents.
+> Fetch a public web page at request time and return retrieved page data: extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. Use when an agent needs a dated snapshot of extracted page text. Priced $0.01 per call in USDC on Base. Retrieval can fail after payment; the response carries no truth verdict about the page's contents.
 
 ### Verify — `POST /api/verify` — $0.03
 
@@ -40,17 +40,17 @@ For x402.new, x402scan, and indexes that import Bazaar resources. Leads with the
 
 ### Short form (one line, for card layouts)
 
-> Web evidence with provenance. Fetch any public page and get its text, retrieval timestamp, redirect chain, and SHA-256 hash — proof of what a page said, at $0.002 a call on Base.
+> Web evidence with provenance. Fetch any public page and get its text, retrieval timestamp, redirect chain, and SHA-256 hash — a dated snapshot of extracted text, at $0.01 a call on Base.
 
 ### Long form (for a directory detail page)
 
-> **FreshFact Evidence** retrieves a public web page at request time and returns machine-readable proof of what it contained: the extracted text, the final URL after redirects, the HTTP status, the retrieval timestamp, the full redirect chain, and a SHA-256 hash over the exact text retrieved.
+> **FreshFact Evidence** retrieves a public web page at request time and returns machine-readable extracted page data: the extracted text, the final URL after redirects, the HTTP status, the retrieval timestamp, the full redirect chain, and a SHA-256 hash over the returned text.
 >
-> Most retrieval APIs answer *what is relevant right now*. Evidence answers *what did this page say at 17:27 on the 25th, and can I prove it later* — the question that matters when an agent's output gets disputed, audited, or replayed after the page has changed.
+> Store the returned text and metadata if an agent needs to review what it received later. The response is not independently authenticated or archived by FreshFact.
 >
-> - **Price:** $0.002 per call in USDC on Base
+> - **Price:** $0.01 per call in USDC on Base
 > - **No account, no API key** — x402 payment on the request
-> - **Failure policy:** 502 with no charge if the source cannot be retrieved
+> - **Failure policy:** Retrieval may fail after payment; a 502 does not establish whether payment settled
 > - **Scope:** public HTML and plain-text URLs, 2 MB transfer limit, 50,000-character text limit, ten-second timeout per hop, up to five redirects
 > - **Not included:** any verdict on whether the page's content is true, accurate, or current
 >
@@ -64,22 +64,22 @@ For an individual building retrieval agents. Short, no pitch-deck register. Send
 
 ### Subject line options
 
-- Paid fetch with provenance — $0.002, live on Base
-- Your retrieval pipeline probably can't prove what it read
+- Paid fetch with provenance — $0.01, live on Base
+- Dated page extraction for your retrieval pipeline
 
 ### Body
 
 > Hi — I built something at the edge of what you're working on, and I'd rather show you than describe it.
 >
-> Most retrieval APIs return what's relevant now. If your agent's output gets questioned a week later, you can't show what the page actually said when it read it. FreshFact Evidence is a fetch that returns proof: extracted text, retrieval timestamp, redirect chain, and a SHA-256 hash over the exact text.
+> Most retrieval APIs return what's relevant now. A stored response can help an operator review the text their agent received. FreshFact Evidence returns: extracted text, retrieval timestamp, redirect chain, and a SHA-256 hash over the exact text.
 >
-> It's live, it's $0.002 a call in USDC on Base, and there's no key or signup — your agent gets a 402, pays, retries, and gets the result. If the fetch fails, you're not charged.
+> It's live, it's $0.01 a call in USDC on Base, and there's no key or signup — your agent gets a 402, pays, retries, and gets the result. A fetch can fail after payment; check the response before using the result.
 >
 > ```
 > curl -i https://fresh-fact.onrender.com/api/evidence
 > ```
 >
-> That returns the payment requirements without paying anything. Worth two cents to see if it's useful? If the provenance block doesn't earn its place in your pipeline, tell me and I'll leave you alone.
+> That returns the payment requirements without paying anything. Would this result be useful in your pipeline? If the provenance block doesn't earn its place in your pipeline, tell me and I'll leave you alone.
 
 ### What not to send
 
