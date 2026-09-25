@@ -6,7 +6,7 @@ All endpoints use x402 v2, Base mainnet USDC, and the configured `FRESHFACT_PAY_
 
 | Product | Request | Price | Coverage |
 | --- | --- | ---: | --- |
-| Evidence | `GET /api/evidence?url=<public-url>` | $0.01 | One public HTML/plain-text URL; extracted text and source metadata. |
+| Evidence | `GET /api/evidence?url=<public-url>` | $0.002 | One public HTML/plain-text URL; extracted text and source metadata. |
 | Verify | `POST /api/verify` with `{"claim":"...","urls":["https://example.com"]}` | $0.03 | One to three supplied public URLs; passages sharing terms with the claim, retrieval time, content hash. No semantic truth verdict. |
 | Research | `POST /api/research` with `{"query":"..."}` | $0.05 | Search English Wikipedia and retrieve up to three matching pages. Wikipedia only; not a live-web search. |
 
@@ -25,7 +25,7 @@ Potential distribution indexes:
 
 ### Listing description
 
-> FreshFact Evidence retrieves a public web page at request time and returns clean machine-readable evidence with source provenance, freshness headers, retrieval timestamp, metadata, redirect history, and a SHA-256 integrity hash. Pay $0.01 USDC on Base per request through x402.
+> FreshFact Evidence retrieves a public web page at request time and returns clean machine-readable evidence with source provenance, freshness headers, retrieval timestamp, metadata, redirect history, and a SHA-256 integrity hash. Pay $0.002 USDC on Base per request through x402.
 
 ### Commercial validation gate
 
