@@ -479,8 +479,9 @@ async function start() {
   <h2>Paid endpoint</h2>
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
 
-  <h2>Additional products under review</h2>
-  <p>Verify and Research are temporarily unavailable while their results are reviewed. They cannot be purchased.</p>
+  <h2>More agent products</h2>
+  <p><strong>FreshFact Verify · $0.03:</strong> POST /api/verify with JSON {"claim":"...","urls":["https://example.com"]}. Returns relevant passages and source fingerprints. It does not make a truth determination.</p>
+  <p><strong>FreshFact Research · $0.05:</strong> POST /api/research with JSON {"query":"..."}. Searches English Wikipedia and retrieves up to three pages. It does not search the live web.</p>
 
   <h2>What you receive</h2>
   <ul>
@@ -702,14 +703,6 @@ ${baseUrl}/.well-known/x402-catalog.json
           },
         },
       },
-    });
-  });
-
-  // Pause the unvalidated products before x402 can request or settle payment.
-  app.post(["/api/verify", "/api/research"], (req, res) => {
-    res.status(503).json({
-      error: "PRODUCT_UNAVAILABLE",
-      message: "This product is temporarily unavailable while its results are reviewed.",
     });
   });
 
