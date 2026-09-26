@@ -117,7 +117,8 @@ async function callFreshFact(path, init = {}) {
 /** Wrap a result as MCP text content. */
 function asContent(result) {
   return {
-    isError: result.ok !== true,
+    // A 402 quote is the expected discovery-mode result, not an MCP failure.
+    isError: result.reason !== "payment_required" && result.ok !== true,
     content: [
       {
         type: "text",
