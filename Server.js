@@ -547,6 +547,7 @@ async function start() {
 
   app.get("/health", (req, res) => {
     res.json({
+      ok: true,
       status: "ok",
       service: "FreshFact Evidence",
       product: "FreshFact Evidence",
