@@ -16,16 +16,27 @@ Payment is per request in USDC on Base, via [x402](https://x402.org). No account
 
 `freshfact_verify` and `freshfact_research` return **lexical term overlap only**. `termCoverage` is not a truth verdict, and a returned passage may contradict the claim. Neither tool adjudicates whether something is true.
 
-## Install
+## Current installation status
 
-Add to your MCP client config (for Claude Desktop, `claude_desktop_config.json`):
+The package name is reserved in this repository, but it is **not yet published to npm**. Do not use the `npx @jeffjwebb/freshfact-mcp` command until the package is published; npm currently returns 404 for it.
+
+For source testing, clone this repository and build the MCP package:
+
+```bash
+git clone https://github.com/jeffjwebb-png/Fresh-Fact.git
+cd Fresh-Fact/mcp
+npm ci
+npm run build
+```
+
+Then add the built server to your MCP client config, replacing the path with the absolute path on your computer:
 
 ```json
 {
   "mcpServers": {
     "freshfact": {
-      "command": "npx",
-      "args": ["-y", "@jeffjwebb/freshfact-mcp"]
+      "command": "node",
+      "args": ["/absolute/path/to/Fresh-Fact/mcp/dist/index.js"]
     }
   }
 }
@@ -41,8 +52,8 @@ To make paid calls, set `FRESHFACT_X402_FETCH` to the module path of an x402-cap
 {
   "mcpServers": {
     "freshfact": {
-      "command": "npx",
-      "args": ["-y", "@jeffjwebb/freshfact-mcp"],
+      "command": "node",
+      "args": ["/absolute/path/to/Fresh-Fact/mcp/dist/index.js"],
       "env": {
         "FRESHFACT_X402_FETCH": "/absolute/path/to/your-x402-fetch.js"
       }
