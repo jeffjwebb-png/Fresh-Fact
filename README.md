@@ -10,6 +10,8 @@ All endpoints use x402 v2, Base mainnet USDC, and the configured `FRESHFACT_PAY_
 | Verify | `POST /api/verify` with `{"claim":"...","urls":["https://example.com"]}` | $0.03 | One to three supplied public URLs; passages sharing terms with the claim, retrieval time, content hash. No semantic truth verdict. |
 | Research | `POST /api/research` with `{"query":"..."}` | $0.05 | Search English Wikipedia and retrieve up to three matching pages. Wikipedia only; not a live-web search. |
 
+Evidence separates headings, paragraphs, and list items in `data.text`. `data.sections` gives each block's type and start/end character offsets into that exact text, so an agent can locate a passage without guessing where HTML elements ended. A page with no usable extracted text returns `EMPTY_SOURCE` instead of an empty successful result. The hash still covers `data.text`; it is not independent proof that the source page is authentic.
+
 Verify and Research return `termCoverage` for matching passages; that number measures overlap with query words, not confidence that the passage supports a claim. A passage may contradict the query. Their SHA-256 hashes cover the normalized text used to find passages. Each fetched page has a 2 MB transfer limit, a 50,000-character text limit, and a ten-second timeout per hop. Failed retrieval after payment returns 502; upstream availability is not guaranteed.
 
 OpenAPI, `llms.txt`, `/.well-known/x402-catalog.json`, and `/.well-known/x402` advertise these products.
