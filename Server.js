@@ -4,6 +4,7 @@ const dns = require("dns").promises;
 const net = require("net");
 const { Agent } = require("undici");
 const { validateSources, validateClaim, validateQuery, evidenceFromPage, searchWikipedia } = require("./products");
+const { extractReadableText } = require("./readableText");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -910,11 +911,13 @@ ${baseUrl}/.well-known/x402-catalog.json
 
       $("script,style,noscript,svg,canvas,template").remove();
 
-      const text = collapseWhitespace(
-        $("main").first().text() ||
-        $("article").first().text() ||
-        $("body").text()
-      ).slice(0, maxChars);
+      const { text, sections, truncated } = extractReadableText($, maxChars);
+      if (!text) {
+        return res.status(502).json({
+          error: "EMPTY_SOURCE",
+          message: "The source returned no usable text.",
+        });
+      }
 
       const wordCount =
         text ? text.split(/\s+/).filter(Boolean).length : 0;
@@ -955,10 +958,11 @@ ${baseUrl}/.well-known/x402-catalog.json
         },
         data: {
           text,
+          sections,
           wordCount,
           bytesReceived: bytes,
           fetchMs,
-          truncated: text.length >= maxChars,
+          truncated,
         },
       });
     } catch (error) {
