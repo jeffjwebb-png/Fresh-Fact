@@ -29,6 +29,18 @@ test("nested page blocks are not duplicated", () => {
   assert.equal(result.usable, true);
 });
 
+test("direct text around nested blocks keeps its order and inline wording", () => {
+  const result = extractReadableText(load(`<main><div>Refunds are <strong>available</strong>.
+    <p>Keep your receipt.</p>Contact us within thirty days.</div></main>`), 30000);
+  assert.equal(result.text, "Refunds are available.\n\nKeep your receipt.\n\nContact us within thirty days.");
+  assert.equal(result.usable, true);
+});
+
+test("navigation text does not count as a delivered answer", () => {
+  const result = extractReadableText(load(`<main><nav><p>Click here to see the return policy.</p></nav><h1>Returns</h1></main>`), 30000);
+  assert.equal(result.usable, false);
+});
+
 test("Verify passages do not assert truth when a page contradicts the claim", () => {
   const page = { finalUrl: "https://example.org/price", retrievedAt: new Date().toISOString(),
     title: "Prices", text: "Prices did not increase by 20 percent last year." };
