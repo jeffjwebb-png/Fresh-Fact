@@ -467,15 +467,6 @@ async function start() {
 
   app.use(express.json({ limit: "16kb", type: "application/json" }));
 
-  // Do not advertise a purchasable product in machine catalogs while the
-  // paid routes are paused for quality review.
-  app.use((req, res, next) => {
-    if (["/llms.txt", "/openapi.json", "/.well-known/x402-catalog.json", "/.well-known/x402"].includes(req.path)) {
-      return res.status(503).json({ error: "PRODUCT_PAUSED", message: "FreshFact products are unavailable during a quality review." });
-    }
-    next();
-  });
-
   app.use((error, req, res, next) => {
     if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
       return res.status(400).json({
@@ -571,7 +562,9 @@ async function start() {
     res.type("text/plain").send(
 `# FreshFact
 
-FreshFact sells fresh web evidence to software agents over x402.
+Status: paused for output quality review. Paid routes return HTTP 503 before payment, so no payment is accepted while paused.
+
+FreshFact provides fresh web evidence to software agents over x402 when active.
 
 ## Paid endpoint
 GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
@@ -597,12 +590,16 @@ ${baseUrl}/.well-known/x402-catalog.json
     res.json({
       name: "FreshFact",
       version: "1.0.0",
+      status: "paused",
+      purchasable: false,
+      statusMessage: "Paid routes are paused for output quality review and return HTTP 503 before payment.",
       description:
         "Fresh web evidence for agents: URL in, clean current evidence out.",
       paymentProtocol: "x402",
       network: "eip155:8453",
       asset: "USDC",
-      resources: [
+      resources: [],
+      plannedResources: [
         {
           method: "GET",
           url: `${baseUrl}/api/evidence`,
@@ -637,8 +634,13 @@ ${baseUrl}/.well-known/x402-catalog.json
 
   // Compatibility discovery document consumed by x402scan and other crawlers.
   app.get("/.well-known/x402", (req, res) => {
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
-    res.json({ version: 1, resources: [`${baseUrl}/api/evidence`, `${baseUrl}/api/verify`, `${baseUrl}/api/research`] });
+    res.json({
+      version: 1,
+      status: "paused",
+      purchasable: false,
+      statusMessage: "Paid routes are paused for output quality review and return HTTP 503 before payment.",
+      resources: [],
+    });
   });
 
   app.get("/openapi.json", (req, res) => {
@@ -650,8 +652,9 @@ ${baseUrl}/.well-known/x402-catalog.json
         title: "FreshFact Evidence API",
         version: "1.0.0",
         description:
-          "Pay-per-request fresh web evidence over x402.",
+          "Pay-per-request fresh web evidence over x402. Purchases are currently paused for output quality review; paid routes return HTTP 503 before payment.",
       },
+      "x-service-status": "paused",
       servers: [{ url: baseUrl }],
       components: {
         securitySchemes: {
@@ -716,6 +719,10 @@ ${baseUrl}/.well-known/x402-catalog.json
                 description:
                   "Unable to retrieve source",
               },
+              "503": {
+                description:
+                  "Product paused before payment",
+              },
             },
           },
         },
@@ -729,7 +736,7 @@ ${baseUrl}/.well-known/x402-catalog.json
               claim: { type: "string", minLength: 8, maxLength: 300 },
               urls: { type: "array", minItems: 1, maxItems: 3, items: { type: "string", format: "uri" } },
             }, required: ["claim", "urls"] } } } },
-            responses: { "200": { description: "Source evidence and related passages" }, "400": { description: "Invalid input" }, "402": { description: "Payment required via x402" }, "502": { description: "Source unavailable" } },
+            responses: { "200": { description: "Source evidence and related passages" }, "400": { description: "Invalid input" }, "402": { description: "Payment required via x402" }, "502": { description: "Source unavailable" }, "503": { description: "Product paused before payment" } },
           },
         },
         "/api/research": {
@@ -741,7 +748,7 @@ ${baseUrl}/.well-known/x402-catalog.json
             requestBody: { required: true, content: { "application/json": { schema: { type: "object", properties: {
               query: { type: "string", minLength: 3, maxLength: 300 },
             }, required: ["query"] } } } },
-            responses: { "200": { description: "Wikipedia results with related passages" }, "400": { description: "Invalid input" }, "402": { description: "Payment required via x402" }, "502": { description: "Search or source unavailable" } },
+            responses: { "200": { description: "Wikipedia results with related passages" }, "400": { description: "Invalid input" }, "402": { description: "Payment required via x402" }, "502": { description: "Search or source unavailable" }, "503": { description: "Product paused before payment" } },
           },
         },
       },
