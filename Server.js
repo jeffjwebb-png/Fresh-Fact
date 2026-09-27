@@ -799,7 +799,9 @@ ${baseUrl}/.well-known/x402-catalog.json
     const $ = load(fetched.body);
     const title = $("title").first().text().trim() || null;
     $("script,style,noscript,svg,canvas,template").remove();
-    const text = collapseWhitespace($("main").first().text() || $("article").first().text() || $("body").text()).slice(0, MAX_CHARS);
+    const extracted = extractReadableText($, MAX_CHARS);
+    if (!extracted.usable) throw new Error("EMPTY_SOURCE");
+    const text = extracted.text;
     return { finalUrl: fetched.finalUrl, retrievedAt: new Date().toISOString(), title, text };
   }
 
@@ -807,6 +809,9 @@ ${baseUrl}/.well-known/x402-catalog.json
     try {
       const pages = await Promise.all(req.validatedUrls.map(readEvidencePage));
       const sources = pages.map((page) => evidenceFromPage(page, req.validatedClaim));
+      if (!sources.some((source) => source.passages.length)) {
+        return res.status(422).json({ error: "NO_RELEVANT_PASSAGES", message: "Sources contained no passages matching the claim." });
+      }
       res.json({
         service: "FreshFact Verify", version: "1.0.0", claim: req.validatedClaim,
         assessment: sources.some((source) => source.passages.length) ? "related_passages_found" : "no_matching_passages",
@@ -823,10 +828,16 @@ ${baseUrl}/.well-known/x402-catalog.json
   app.post("/api/research", async (req, res) => {
     try {
       const urls = await searchWikipedia(req.validatedQuery);
+      if (!urls.length) {
+        return res.status(422).json({ error: "NO_RESULTS", message: "No Wikipedia articles matched this query." });
+      }
       const results = await Promise.allSettled(urls.map(readEvidencePage));
       const sources = results.filter((result) => result.status === "fulfilled")
         .map((result) => evidenceFromPage(result.value, req.validatedQuery));
       if (!sources.length && urls.length) throw new Error("SOURCE_UNAVAILABLE");
+      if (!sources.some((source) => source.passages.length)) {
+        return res.status(422).json({ error: "NO_RELEVANT_PASSAGES", message: "Retrieved articles contained no passages matching the query." });
+      }
       res.json({
         service: "FreshFact Research", version: "1.0.0", query: req.validatedQuery,
         scope: "English Wikipedia only", searchedAt: new Date().toISOString(),
@@ -923,8 +934,8 @@ ${baseUrl}/.well-known/x402-catalog.json
 
       $("script,style,noscript,svg,canvas,template").remove();
 
-      const { text, sections, truncated } = extractReadableText($, maxChars);
-      if (!text) {
+      const { text, sections, truncated, usable } = extractReadableText($, maxChars);
+      if (!usable) {
         return res.status(502).json({
           error: "EMPTY_SOURCE",
           message: "The source returned no usable text.",
