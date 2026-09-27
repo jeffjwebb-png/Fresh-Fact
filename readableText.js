@@ -35,7 +35,14 @@ function extractReadableText($, maxChars) {
     sections.push({ type: block.type, start, end });
     cursor += block.text.length + 2;
   }
-  return { text, sections, truncated: fullText.length > text.length };
+  // A title or navigation label alone is not a delivered page extract.
+  // A short prose paragraph can still be useful, so reject only when there
+  // is no substantive non-heading block at all.
+  const usable = sections.some(({ type, start, end }) =>
+    !/^h[1-6]$/.test(type) && end - start >= 20 &&
+    text.slice(start, end).split(/\s+/).length >= 4
+  );
+  return { text, sections, truncated: fullText.length > text.length, usable };
 }
 
 module.exports = { extractReadableText };
