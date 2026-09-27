@@ -8,9 +8,13 @@ function extractReadableText($, maxChars) {
   const root = $("main").first().length ? $("main").first()
     : $("article").first().length ? $("article").first() : $("body");
   const blocks = [];
-  root.find(BLOCK_SELECTOR).each((_, element) => {
-    // Nested block tags (especially list items containing paragraphs) must not repeat text.
+  root.find(`${BLOCK_SELECTOR},div,section`).each((_, element) => {
+    // Nested paragraph and list tags should not duplicate their parent's text.
     if ($(element).parents(BLOCK_SELECTOR).length) return;
+    // Some pages put useful prose directly in divs. Include leaf containers,
+    // while allowing their child blocks to appear in the original page order.
+    if (["div", "section"].includes(element.name) &&
+        $(element).find(`${BLOCK_SELECTOR},div,section`).length) return;
     const text = normalize($(element).text());
     if (text) blocks.push({ type: element.name, text });
   });
