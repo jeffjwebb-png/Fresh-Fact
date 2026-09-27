@@ -6,7 +6,8 @@ function normalize(value) {
 }
 
 function extractReadableText($, maxChars) {
-  const root = $("main").first().length ? $("main").first()
+  const root = $("#mw-content-text").first().length ? $("#mw-content-text").first()
+    : $("main").first().length ? $("main").first()
     : $("article").first().length ? $("article").first() : $("body");
   const blocks = [];
   function visit(node) {
