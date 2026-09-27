@@ -1,4 +1,5 @@
-const BLOCK_SELECTOR = "h1,h2,h3,h4,h5,h6,p,li,blockquote,pre";
+const BLOCK_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "pre"]);
+const SKIP_TAGS = new Set(["nav", "footer", "aside", "script", "style", "noscript", "svg", "canvas", "template", "form", "button"]);
 
 function normalize(value) {
   return String(value || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
@@ -8,21 +9,38 @@ function extractReadableText($, maxChars) {
   const root = $("main").first().length ? $("main").first()
     : $("article").first().length ? $("article").first() : $("body");
   const blocks = [];
-  root.find(`${BLOCK_SELECTOR},div,section`).each((_, element) => {
-    // Nested paragraph and list tags should not duplicate their parent's text.
-    if ($(element).parents(BLOCK_SELECTOR).length) return;
-    // Some pages put useful prose directly in divs. Include leaf containers,
-    // while allowing their child blocks to appear in the original page order.
-    if (["div", "section"].includes(element.name) &&
-        $(element).find(`${BLOCK_SELECTOR},div,section`).length) return;
-    const text = normalize($(element).text());
-    if (text) blocks.push({ type: element.name, text });
-  });
-
-  if (!blocks.length) {
-    const fallback = normalize(root.text());
-    if (fallback) blocks.push({ type: "body", text: fallback });
+  function visit(node) {
+    if (node.type === "text") return node.data || "";
+    if (node.type !== "tag" && node.type !== "root") return "";
+    if (SKIP_TAGS.has(node.name)) return "";
+    if (BLOCK_TAGS.has(node.name)) {
+      const text = normalize($(node).text());
+      if (text) blocks.push({ type: node.name, text });
+      return "";
+    }
+    let inline = "";
+    const flush = () => {
+      const text = normalize(inline);
+      if (text) blocks.push({ type: node.name || "body", text });
+      inline = "";
+    };
+    for (const child of node.children || []) {
+      if (child.type === "tag" && (BLOCK_TAGS.has(child.name) ||
+          ["div", "section", "article", "main"].includes(child.name))) {
+        flush();
+        visit(child);
+      } else if (child.type === "tag" && SKIP_TAGS.has(child.name)) {
+        continue;
+      } else if (child.type === "tag") {
+        inline += $(child).text();
+      } else {
+        inline += visit(child);
+      }
+    }
+    flush();
+    return "";
   }
+  root.each((_, element) => visit(element));
 
   const fullText = blocks.map((block) => block.text).join("\n\n");
   const text = fullText.slice(0, maxChars);
