@@ -779,6 +779,18 @@ ${baseUrl}/.well-known/x402-catalog.json
     next();
   });
 
+  // Pause all paid products until their delivered output passes a buyer task
+  // review. This runs before x402 verification or settlement.
+  app.use((req, res, next) => {
+    if (PAID_PATHS.has(req.path)) {
+      return res.status(503).json({
+        error: "PRODUCT_PAUSED",
+        message: "FreshFact paid products are unavailable during a quality review.",
+      });
+    }
+    next();
+  });
+
   app.use(paymentMiddleware(routes, resourceServer));
 
   async function readEvidencePage(url) {
