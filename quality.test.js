@@ -41,6 +41,13 @@ test("navigation text does not count as a delivered answer", () => {
   assert.equal(result.usable, false);
 });
 
+test("Wikipedia article content takes precedence over navigation in main", () => {
+  const result = extractReadableText(load(`<main><div>160 languages and navigation</div>
+    <div id="mw-content-text"><p>Photosynthesis converts light energy into chemical energy.</p></div></main>`), 30000);
+  assert.equal(result.usable, true);
+  assert.equal(result.text, "Photosynthesis converts light energy into chemical energy.");
+});
+
 test("Verify passages do not assert truth when a page contradicts the claim", () => {
   const page = { finalUrl: "https://example.org/price", retrievedAt: new Date().toISOString(),
     title: "Prices", text: "Prices did not increase by 20 percent last year." };
