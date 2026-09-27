@@ -467,6 +467,15 @@ async function start() {
 
   app.use(express.json({ limit: "16kb", type: "application/json" }));
 
+  // Do not advertise a purchasable product in machine catalogs while the
+  // paid routes are paused for quality review.
+  app.use((req, res, next) => {
+    if (["/llms.txt", "/openapi.json", "/.well-known/x402-catalog.json", "/.well-known/x402"].includes(req.path)) {
+      return res.status(503).json({ error: "PRODUCT_PAUSED", message: "FreshFact products are unavailable during a quality review." });
+    }
+    next();
+  });
+
   app.use((error, req, res, next) => {
     if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
       return res.status(400).json({
@@ -518,7 +527,7 @@ async function start() {
   <h1>FreshFact Evidence</h1>
   <p>Fresh web evidence for AI agents and software.</p>
   <p>Give FreshFact a public URL and receive clean extracted text, provenance, freshness signals, metadata and an integrity hash in machine-readable JSON.</p>
-  <p class="price">$0.01 USDC per request · Base mainnet · x402</p>
+  <p class="price">Purchases paused during quality review.</p>
 
   <h2>Paid endpoint</h2>
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
@@ -541,7 +550,7 @@ async function start() {
   <h2>Machine access</h2>
   <p><a href="/openapi.json">OpenAPI</a> · <a href="/llms.txt">llms.txt</a> · <a href="/.well-known/x402-catalog.json">Discovery metadata</a> · <a href="/health">Health</a></p>
 
-  <p>A request without a valid x402 payment returns HTTP 402 with payment requirements. No API-key signup is required.</p>
+  <p>Paid routes and machine discovery are unavailable until product quality has been verified.</p>
 </body>
 </html>`);
   });
