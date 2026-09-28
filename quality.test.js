@@ -48,6 +48,39 @@ test("Wikipedia article content takes precedence over navigation in main", () =>
   assert.equal(result.text, "Photosynthesis converts light energy into chemical energy.");
 });
 
+test("lists preserve one item per section", () => {
+  const result = extractReadableText(load(`<main><h1>Included</h1><ul>
+    <li>Priority email support</li><li>Five team members</li></ul></main>`), 30000);
+  assert.equal(result.usable, true);
+  assert.equal(result.text, "Included\n\nPriority email support\n\nFive team members");
+});
+
+test("table cells preserve field and value boundaries", () => {
+  const result = extractReadableText(load(`<main><h1>Plan</h1><table><tbody>
+    <tr><th>Price</th><td>$19 per month</td></tr>
+    <tr><th>Users</th><td>Five included</td></tr></tbody></table></main>`), 30000);
+  assert.equal(result.usable, true);
+  assert.equal(result.text, "Plan\n\nPrice\n\n$19 per month\n\nUsers\n\nFive included");
+});
+
+test("definition lists preserve specification boundaries", () => {
+  const result = extractReadableText(load(`<main><h1>Specifications</h1><dl>
+    <dt>Battery life</dt><dd>Up to eighteen hours</dd>
+    <dt>Weight</dt><dd>Three pounds</dd></dl></main>`), 30000);
+  assert.equal(result.usable, true);
+  assert.equal(result.text,
+    "Specifications\n\nBattery life\n\nUp to eighteen hours\n\nWeight\n\nThree pounds");
+});
+
+test("FAQ summaries and answers remain separate", () => {
+  const result = extractReadableText(load(`<main><h1>FAQ</h1><details>
+    <summary>How long does delivery take?</summary>
+    <p>Delivery takes three business days.</p></details></main>`), 30000);
+  assert.equal(result.usable, true);
+  assert.equal(result.text,
+    "FAQ\n\nHow long does delivery take?\n\nDelivery takes three business days.");
+});
+
 test("Verify passages do not assert truth when a page contradicts the claim", () => {
   const page = { finalUrl: "https://example.org/price", retrievedAt: new Date().toISOString(),
     title: "Prices", text: "Prices did not increase by 20 percent last year." };
