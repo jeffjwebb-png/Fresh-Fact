@@ -1,4 +1,11 @@
-const BLOCK_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "pre"]);
+const BLOCK_TAGS = new Set([
+  "h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "pre",
+  "dt", "dd", "th", "td", "summary", "figcaption", "address",
+]);
+const CONTAINER_TAGS = new Set([
+  "div", "section", "article", "main", "ul", "ol", "table", "thead",
+  "tbody", "tfoot", "tr", "dl", "details", "figure",
+]);
 const SKIP_TAGS = new Set(["nav", "footer", "aside", "script", "style", "noscript", "svg", "canvas", "template", "form", "button"]);
 
 function normalize(value) {
@@ -27,7 +34,7 @@ function extractReadableText($, maxChars) {
     };
     for (const child of node.children || []) {
       if (child.type === "tag" && (BLOCK_TAGS.has(child.name) ||
-          ["div", "section", "article", "main"].includes(child.name))) {
+          CONTAINER_TAGS.has(child.name))) {
         flush();
         visit(child);
       } else if (child.type === "tag" && SKIP_TAGS.has(child.name)) {
@@ -57,10 +64,13 @@ function extractReadableText($, maxChars) {
   // A title or navigation label alone is not a delivered page extract.
   // A short prose paragraph can still be useful, so reject only when there
   // is no substantive non-heading block at all.
-  const usable = sections.some(({ type, start, end }) =>
-    !/^h[1-6]$/.test(type) && end - start >= 20 &&
-    text.slice(start, end).split(/\s+/).length >= 4
-  );
+  const substantiveText = sections
+    .filter(({ type }) => !/^h[1-6]$/.test(type))
+    .map(({ start, end }) => text.slice(start, end))
+    .join(" ")
+    .trim();
+  const usable = substantiveText.length >= 20 &&
+    substantiveText.split(/\s+/).filter(Boolean).length >= 4;
   return { text, sections, truncated: fullText.length > text.length, usable };
 }
 
