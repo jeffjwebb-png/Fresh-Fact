@@ -5,6 +5,7 @@ const net = require("net");
 const { Agent } = require("undici");
 const { validateSources, validateClaim, validateQuery, evidenceFromPage, searchWikipedia } = require("./products");
 const { extractReadableText } = require("./readableText");
+const { PreflightError, createPreflightGate } = require("./preflightGate");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -425,7 +426,7 @@ async function start() {
         maxTimeoutSeconds: 300,
       },
       description:
-        "Fetch a public web page and return extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. Priced $0.01 per call in USDC on Base. Retrieval can fail after payment; the response carries no truth verdict about the page contents.",
+        "Fetch a public web page and return extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. FreshFact prepares and validates the complete response before requesting payment. Priced $0.01 per call in USDC on Base. The response carries no truth verdict about the page contents.",
       mimeType: "application/json",
       serviceName: "FreshFact Evidence",
       tags: ["web", "evidence", "freshness", "research", "agents", "provenance", "audit", "verification", "retrieval", "fetch"],
@@ -576,6 +577,7 @@ POST ${baseUrl}/api/verify with {"claim":"...","urls":["https://example.com"]}: 
 POST ${baseUrl}/api/research with {"query":"..."}: $0.05 USDC. Searches English Wikipedia only and retrieves up to three pages; not current-web search.
 
 Returns clean page text plus title, description, canonical URL, published/modified dates when available, HTTP freshness headers, redirect chain, word count, SHA-256 content hash, source URL and retrieval timestamp.
+When active, FreshFact prepares and validates the complete deliverable before requesting x402 payment. Invalid or unusable sources are rejected without requesting payment.
 
 ## Discovery
 ${baseUrl}/openapi.json
@@ -611,6 +613,7 @@ ${baseUrl}/.well-known/x402-catalog.json
               "Optional maximum extracted text characters, 1000-50000",
           },
           output: [
+            "complete response prepared before payment",
             "final source URL",
             "HTTP status and content type",
             "title and description",
@@ -671,6 +674,7 @@ ${baseUrl}/.well-known/x402-catalog.json
           get: {
             summary:
               "Retrieve current clean evidence from a public web URL",
+            description: "The complete deliverable is prepared and validated before x402 payment is requested. Invalid, unavailable, or unusable sources are rejected without payment.",
             security: [{ x402Payment: [] }],
             "x-payment-info": {
               protocols: ["x402"],
@@ -705,7 +709,7 @@ ${baseUrl}/.well-known/x402-catalog.json
               },
               "402": {
                 description:
-                  "Payment required via x402",
+                  "Deliverable prepared successfully; payment required via x402",
               },
               "413": {
                 description:
@@ -714,6 +718,10 @@ ${baseUrl}/.well-known/x402-catalog.json
               "415": {
                 description:
                   "Unsupported source content type",
+              },
+              "422": {
+                description:
+                  "Source contained no usable deliverable; no payment requested",
               },
               "502": {
                 description:
@@ -736,7 +744,7 @@ ${baseUrl}/.well-known/x402-catalog.json
               claim: { type: "string", minLength: 8, maxLength: 300 },
               urls: { type: "array", minItems: 1, maxItems: 3, items: { type: "string", format: "uri" } },
             }, required: ["claim", "urls"] } } } },
-            responses: { "200": { description: "Source evidence and related passages" }, "400": { description: "Invalid input" }, "402": { description: "Payment required via x402" }, "502": { description: "Source unavailable" }, "503": { description: "Product paused before payment" } },
+            responses: { "200": { description: "Source evidence and related passages" }, "400": { description: "Invalid input; no payment requested" }, "402": { description: "Deliverable prepared successfully; payment required via x402" }, "422": { description: "No relevant passages; no payment requested" }, "502": { description: "Source unavailable; no payment requested" }, "503": { description: "Product paused or preflight busy before payment" } },
           },
         },
         "/api/research": {
@@ -748,7 +756,7 @@ ${baseUrl}/.well-known/x402-catalog.json
             requestBody: { required: true, content: { "application/json": { schema: { type: "object", properties: {
               query: { type: "string", minLength: 3, maxLength: 300 },
             }, required: ["query"] } } } },
-            responses: { "200": { description: "Wikipedia results with related passages" }, "400": { description: "Invalid input" }, "402": { description: "Payment required via x402" }, "502": { description: "Search or source unavailable" }, "503": { description: "Product paused before payment" } },
+            responses: { "200": { description: "Wikipedia results with related passages" }, "400": { description: "Invalid input; no payment requested" }, "402": { description: "Deliverable prepared successfully; payment required via x402" }, "422": { description: "No usable matching research; no payment requested" }, "502": { description: "Search or source unavailable; no payment requested" }, "503": { description: "Product paused or preflight busy before payment" } },
           },
         },
       },
@@ -807,6 +815,15 @@ ${baseUrl}/.well-known/x402-catalog.json
     next();
   });
 
+  // When products are re-enabled, build the exact deliverable before x402
+  // verification or settlement. A successful unpaid probe and its paid retry
+  // share the short-lived prepared response, so handlers perform no network
+  // retrieval after payment.
+  app.use(createPreflightGate({
+    paidPaths: PAID_PATHS,
+    prepare: preparePaidResponse,
+  }));
+
   app.use(paymentMiddleware(routes, resourceServer));
 
   async function readEvidencePage(url) {
@@ -821,52 +838,73 @@ ${baseUrl}/.well-known/x402-catalog.json
     return { finalUrl: fetched.finalUrl, retrievedAt: new Date().toISOString(), title, text };
   }
 
-  app.post("/api/verify", async (req, res) => {
+  async function preparePaidResponse(req) {
+    if (req.path === "/api/evidence" && req.method === "GET") {
+      return prepareEvidenceResponse(req);
+    }
+    if (req.path === "/api/verify" && req.method === "POST") {
+      return prepareVerifyResponse(req);
+    }
+    if (req.path === "/api/research" && req.method === "POST") {
+      return prepareResearchResponse(req);
+    }
+    throw new PreflightError(405, "METHOD_NOT_ALLOWED", "This method is not available; no payment was requested.");
+  }
+
+  async function prepareVerifyResponse(req) {
     try {
       const pages = await Promise.all(req.validatedUrls.map(readEvidencePage));
       const sources = pages.map((page) => evidenceFromPage(page, req.validatedClaim));
       if (!sources.some((source) => source.passages.length)) {
-        return res.status(422).json({ error: "NO_RELEVANT_PASSAGES", message: "Sources contained no passages matching the claim." });
+        throw new PreflightError(422, "NO_RELEVANT_PASSAGES", "Sources contained no passages matching the claim; no payment was requested.");
       }
-      res.json({
+      return {
         service: "FreshFact Verify", version: "1.0.0", claim: req.validatedClaim,
-        assessment: sources.some((source) => source.passages.length) ? "related_passages_found" : "no_matching_passages",
+        assessment: "related_passages_found",
         scope: "Supplied URLs only; lexical matching, not semantic fact checking.",
         sources,
         note: "Related passages may contradict or merely mention the claim. Read each source before treating it as support.",
-      });
+      };
     } catch (error) {
-      console.error("Verify source retrieval error:", error);
-      res.status(502).json({ error: "SOURCE_UNAVAILABLE", message: "Could not retrieve all supplied sources." });
+      if (error instanceof PreflightError) throw error;
+      throw new PreflightError(502, "SOURCE_UNAVAILABLE", "Could not retrieve all supplied sources; no payment was requested.");
     }
+  }
+
+  app.post("/api/verify", (req, res) => {
+    res.json(req.preparedResponse);
   });
 
-  app.post("/api/research", async (req, res) => {
+  async function prepareResearchResponse(req) {
     try {
       const urls = await searchWikipedia(req.validatedQuery);
       if (!urls.length) {
-        return res.status(422).json({ error: "NO_RESULTS", message: "No Wikipedia articles matched this query." });
+        throw new PreflightError(422, "NO_RESULTS", "No Wikipedia articles matched this query; no payment was requested.");
       }
       const results = await Promise.allSettled(urls.map(readEvidencePage));
       const sources = results.filter((result) => result.status === "fulfilled")
         .map((result) => evidenceFromPage(result.value, req.validatedQuery));
       if (!sources.length && urls.length) throw new Error("SOURCE_UNAVAILABLE");
       if (!sources.some((source) => source.passages.length)) {
-        return res.status(422).json({ error: "NO_RELEVANT_PASSAGES", message: "Retrieved articles contained no passages matching the query." });
+        throw new PreflightError(422, "NO_RELEVANT_PASSAGES", "Retrieved articles contained no passages matching the query; no payment was requested.");
       }
-      res.json({
+      return {
         service: "FreshFact Research", version: "1.0.0", query: req.validatedQuery,
         scope: "English Wikipedia only", searchedAt: new Date().toISOString(),
         sources, unavailableSourceCount: results.length - sources.length,
         note: "Passages are lexical matches, not a truth assessment. Wikipedia coverage and article update times vary.",
-      });
+      };
     } catch (error) {
-      console.error("Research retrieval error:", error);
-      res.status(502).json({ error: "RESEARCH_UNAVAILABLE", message: "Could not complete Wikipedia research." });
+      if (error instanceof PreflightError) throw error;
+      throw new PreflightError(502, "RESEARCH_UNAVAILABLE", "Could not complete Wikipedia research; no payment was requested.");
     }
+  }
+
+  app.post("/api/research", (req, res) => {
+    res.json(req.preparedResponse);
   });
 
-  app.get("/api/evidence", async (req, res) => {
+  async function prepareEvidenceResponse(req) {
     const requestedUrl =
       typeof req.query.url === "string"
         ? req.query.url.trim()
@@ -884,11 +922,8 @@ ${baseUrl}/.well-known/x402-catalog.json
         : DEFAULT_MAX_CHARS;
 
     if (!requestedUrl) {
-      return res.status(400).json({
-        error: "MISSING_URL",
-        message:
-          "Provide a public URL with ?url=https%3A%2F%2Fexample.com",
-      });
+      throw new PreflightError(400, "MISSING_URL",
+        "Provide a public URL with ?url=https%3A%2F%2Fexample.com; no payment was requested.");
     }
 
     try {
@@ -908,11 +943,9 @@ ${baseUrl}/.well-known/x402-catalog.json
       } = fetched;
 
       if (!response.ok) {
-        return res.status(502).json({
-          error: "SOURCE_HTTP_ERROR",
-          message: "The source returned an error instead of a usable page.",
-          sourceHttpStatus: response.status,
-        });
+        throw new PreflightError(502, "SOURCE_HTTP_ERROR",
+          "The source returned an error instead of a usable page; no payment was requested.",
+          { sourceHttpStatus: response.status });
       }
 
       const $ = load(body);
@@ -952,16 +985,14 @@ ${baseUrl}/.well-known/x402-catalog.json
 
       const { text, sections, truncated, usable } = extractReadableText($, maxChars);
       if (!usable) {
-        return res.status(502).json({
-          error: "EMPTY_SOURCE",
-          message: "The source returned no usable text.",
-        });
+        throw new PreflightError(422, "EMPTY_SOURCE",
+          "The source returned no usable text; no payment was requested.");
       }
 
       const wordCount =
         text ? text.split(/\s+/).filter(Boolean).length : 0;
 
-      res.json({
+      return {
         service: "FreshFact Evidence",
         version: "1.0.0",
         source: {
@@ -1003,56 +1034,37 @@ ${baseUrl}/.well-known/x402-catalog.json
           fetchMs,
           truncated,
         },
-      });
+      };
     } catch (error) {
+      if (error instanceof PreflightError) throw error;
       const code = error.message;
-
-      if (code === "MISSING_URL") {
-        return res.status(400).json({
-          error: code,
-          message: "A public URL is required.",
-        });
-      }
 
       if (
         code === "INVALID_URL" ||
         code === "UNSUPPORTED_PROTOCOL" ||
         code === "PRIVATE_TARGET"
       ) {
-        return res.status(400).json({
-          error: code,
-          message:
-            "The URL must be a public HTTP or HTTPS address.",
-        });
+        throw new PreflightError(400, code,
+          "The URL must be a public HTTP or HTTPS address; no payment was requested.");
       }
 
       if (code === "UNSUPPORTED_CONTENT_TYPE") {
-        return res.status(415).json({
-          error: code,
-          message:
-            "FreshFact Evidence currently supports HTML and plain-text sources.",
-        });
+        throw new PreflightError(415, code,
+          "FreshFact Evidence currently supports HTML and plain-text sources; no payment was requested.");
       }
 
       if (code === "CONTENT_TOO_LARGE") {
-        return res.status(413).json({
-          error: code,
-          message:
-            "Source content exceeded the 2 MB FreshFact retrieval limit.",
-        });
+        throw new PreflightError(413, code,
+          "Source content exceeded the 2 MB FreshFact retrieval limit; no payment was requested.");
       }
 
-      console.error(
-        "FreshFact evidence error:",
-        error
-      );
-
-      return res.status(502).json({
-        error: code,
-        message:
-          "FreshFact could not retrieve this source.",
-      });
+      throw new PreflightError(502, "SOURCE_UNAVAILABLE",
+        "FreshFact could not prepare this source; no payment was requested.");
     }
+  }
+
+  app.get("/api/evidence", (req, res) => {
+    res.json(req.preparedResponse);
   });
 
   app.listen(port, () => {
