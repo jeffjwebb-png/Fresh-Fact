@@ -7,6 +7,7 @@ const { validateSources, validateClaim, validateQuery, evidenceFromPage, searchW
 const { extractReadableText } = require("./readableText");
 const { PreflightError, createPreflightGate } = require("./preflightGate");
 const { isPrivateDeliveryTest } = require("./privateDeliveryTest");
+const { sendDelivery } = require("./deliveryJson");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -894,7 +895,7 @@ ${baseUrl}/.well-known/x402-catalog.json
   }
 
   app.post("/api/verify", (req, res) => {
-    res.json(req.preparedResponse);
+    sendDelivery(res, req.preparedResponse);
   });
 
   async function prepareResearchResponse(req) {
@@ -923,7 +924,7 @@ ${baseUrl}/.well-known/x402-catalog.json
   }
 
   app.post("/api/research", (req, res) => {
-    res.json(req.preparedResponse);
+    sendDelivery(res, req.preparedResponse);
   });
 
   async function prepareEvidenceResponse(req) {
@@ -1086,7 +1087,7 @@ ${baseUrl}/.well-known/x402-catalog.json
   }
 
   app.get("/api/evidence", (req, res) => {
-    res.json(req.preparedResponse);
+    sendDelivery(res, req.preparedResponse);
   });
 
   app.listen(port, () => {

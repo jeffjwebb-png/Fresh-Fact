@@ -16,6 +16,13 @@ function extractReadableText($, maxChars) {
   const root = $("#mw-content-text").first().length ? $("#mw-content-text").first()
     : $("main").first().length ? $("main").first()
     : $("article").first().length ? $("article").first() : $("body");
+  // Plain text must preserve mathematical meaning when HTML superscripts or
+  // subscripts are removed. Work on a clone to keep repeated extraction stable.
+  const readingRoot = root.clone();
+  readingRoot.find("sup:not(.reference), sub").each((_, element) => {
+    const value = normalize($(element).text());
+    if (value) $(element).text(`${element.name === "sup" ? "^" : "_"}(${value})`);
+  });
   const blocks = [];
   function visit(node) {
     if (node.type === "text") return node.data || "";
@@ -48,7 +55,7 @@ function extractReadableText($, maxChars) {
     flush();
     return "";
   }
-  root.each((_, element) => visit(element));
+  readingRoot.each((_, element) => visit(element));
 
   const fullText = blocks.map((block) => block.text).join("\n\n");
   const text = fullText.slice(0, maxChars);
