@@ -8,6 +8,9 @@ const { extractReadableText } = require("./readableText");
 const { PreflightError, createPreflightGate } = require("./preflightGate");
 const { isPrivateDeliveryTest } = require("./privateDeliveryTest");
 const { sendDelivery } = require("./deliveryJson");
+const { evidenceIsEnabled, isPublicEvidenceRequest } = require("./evidenceRelease");
+const { SOURCE_CACHE_HEADERS, sourceFreshness } = require("./sourceFreshness");
+const evidenceEnabled = evidenceIsEnabled();
 
 const app = express();
 app.set("trust proxy", 1);
@@ -206,6 +209,7 @@ async function fetchPublicText(initialUrl) {
         signal: controller.signal,
         dispatcher: publicDispatcher,
         headers: {
+          ...SOURCE_CACHE_HEADERS,
           Accept: "text/html,text/plain,application/xhtml+xml;q=0.9,*/*;q=0.1",
           "User-Agent": "FreshFactEvidenceBot/1.0 (+https://fresh-fact.onrender.com)",
         },
@@ -513,7 +517,7 @@ async function start() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FreshFact Evidence</title>
-  <meta name="description" content="Fresh web evidence for AI agents and software.">
+  <meta name="description" content="Web evidence with source provenance for AI agents and software.">
   <style>
     body{font-family:system-ui,-apple-system,sans-serif;max-width:900px;margin:0 auto;padding:48px 22px;line-height:1.55}
     code,pre{background:#f3f3f3;border-radius:8px}pre{padding:14px;overflow:auto}
@@ -522,20 +526,21 @@ async function start() {
 </head>
 <body>
   <h1>FreshFact Evidence</h1>
-  <p>Fresh web evidence for AI agents and software.</p>
-  <p>Give FreshFact a public URL and receive clean extracted text, provenance, freshness signals, metadata and an integrity hash in machine-readable JSON.</p>
-  <p class="price">Purchases paused during quality review.</p>
+  <p>Web evidence with source provenance for AI agents and software.</p>
+  <p>Give FreshFact a public URL and receive extracted text, source details, retrieval time, reported source cache age, metadata and an integrity hash in machine-readable JSON.</p>
+  <p class="price">${evidenceEnabled ? "$0.01 USDC per request on Base." : "Purchases paused during quality review."}</p>
+  ${evidenceEnabled ? '<p><a href="/api/evidence?url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FKilowatt-hour">Try Evidence with a kilowatt-hour article</a></p>' : ""}
 
   <h2>Paid endpoint</h2>
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
 
-  <h2>More agent products</h2>
+  <h2>Planned products · purchases unavailable</h2>
   <p><strong>FreshFact Verify · $0.03:</strong> POST /api/verify with JSON {"claim":"...","urls":["https://example.com"]}. Returns relevant passages and source fingerprints. It does not make a truth determination.</p>
   <p><strong>FreshFact Research · $0.05:</strong> POST /api/research with JSON {"query":"..."}. Searches English Wikipedia and retrieves up to three pages. It does not search the live web.</p>
 
   <h2>What you receive</h2>
   <ul>
-    <li>Current source retrieval</li>
+    <li>Source retrieval time and reported cache age</li>
     <li>Clean extracted page text</li>
     <li>Source and final URLs plus redirects</li>
     <li>Page metadata and dates when available</li>
@@ -547,7 +552,7 @@ async function start() {
   <h2>Machine access</h2>
   <p><a href="/openapi.json">OpenAPI</a> · <a href="/llms.txt">llms.txt</a> · <a href="/.well-known/x402-catalog.json">Discovery metadata</a> · <a href="/health">Health</a></p>
 
-  <p>Paid routes and machine discovery are unavailable until product quality has been verified.</p>
+  <p>${evidenceEnabled ? "Evidence output is delivered after successful payment settlement. Verify and Research remain unavailable for purchase." : "Paid routes and machine discovery are unavailable until product quality has been verified."}</p>
 </body>
 </html>`);
   });
@@ -558,6 +563,8 @@ async function start() {
       status: "ok",
       service: "FreshFact Evidence",
       product: "FreshFact Evidence",
+      evidenceStatus: evidenceEnabled ? "active" : "paused",
+      release: process.env.RENDER_GIT_COMMIT || "local",
       timestamp: new Date().toISOString(),
     });
   });
@@ -568,9 +575,9 @@ async function start() {
     res.type("text/plain").send(
 `# FreshFact
 
-Status: paused for output quality review. Paid routes return HTTP 503 before payment, so no payment is accepted while paused.
+Status: ${evidenceEnabled ? "Evidence is active at $0.01 USDC per request on Base. Verify and Research are paused." : "paused for output quality review. Paid routes return HTTP 503 before payment, so no payment is accepted while paused."}
 
-FreshFact provides fresh web evidence to software agents over x402 when active.
+FreshFact provides source text and retrieval provenance to software agents over x402 when active. Sources may serve cached copies; sourceCacheAgeSeconds reports the upstream cache age when available, while retrievedAt is the retrieval timestamp. FreshFact requests cache revalidation but cannot guarantee the source honors it.
 
 ## Paid endpoint
 GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
@@ -578,8 +585,7 @@ GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
 Price: $0.01 USDC
 Network: Base mainnet (eip155:8453)
 
-POST ${baseUrl}/api/verify with {"claim":"...","urls":["https://example.com"]}: $0.03 USDC. Finds related passages in supplied public pages. Passage overlap is not verification of truth.
-POST ${baseUrl}/api/research with {"query":"..."}: $0.05 USDC. Searches English Wikipedia only and retrieves up to three pages; not current-web search.
+Planned, unavailable for purchase: Verify finds related passages in supplied public pages; Research searches English Wikipedia. Neither is a truth verdict.
 
 Returns clean page text plus title, description, canonical URL, published/modified dates when available, HTTP freshness headers, redirect chain, word count, SHA-256 content hash, source URL and retrieval timestamp.
 When active, FreshFact prepares and validates the complete deliverable before requesting x402 payment. Invalid or unusable sources are rejected without requesting payment.
@@ -594,14 +600,14 @@ ${baseUrl}/.well-known/x402-catalog.json
   app.get("/.well-known/x402-catalog.json", (req, res) => {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-    res.json({
+    const catalog = {
       name: "FreshFact",
       version: "1.0.0",
-      status: "paused",
-      purchasable: false,
-      statusMessage: "Paid routes are paused for output quality review and return HTTP 503 before payment.",
+      status: evidenceEnabled ? "active" : "paused",
+      purchasable: evidenceEnabled,
+      statusMessage: evidenceEnabled ? "Evidence is available; Verify and Research remain paused." : "Paid routes are paused for output quality review and return HTTP 503 before payment.",
       description:
-        "Fresh web evidence for agents: URL in, clean current evidence out.",
+        "Public URL in, extracted source text and retrieval provenance out. Reported cache age is included when available.",
       paymentProtocol: "x402",
       network: "eip155:8453",
       asset: "USDC",
@@ -637,32 +643,35 @@ ${baseUrl}/.well-known/x402-catalog.json
       ],
       docs: `${baseUrl}/openapi.json`,
       llms: `${baseUrl}/llms.txt`,
-    });
+    };
+    if (evidenceEnabled) catalog.resources = catalog.plannedResources.splice(0, 1);
+    res.json(catalog);
   });
 
   // Compatibility discovery document consumed by x402scan and other crawlers.
   app.get("/.well-known/x402", (req, res) => {
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
     res.json({
       version: 1,
-      status: "paused",
-      purchasable: false,
-      statusMessage: "Paid routes are paused for output quality review and return HTTP 503 before payment.",
-      resources: [],
+      status: evidenceEnabled ? "active" : "paused",
+      purchasable: evidenceEnabled,
+      statusMessage: evidenceEnabled ? "Evidence is available; Verify and Research remain paused." : "Paid routes are paused for output quality review and return HTTP 503 before payment.",
+      resources: evidenceEnabled ? [`${baseUrl}/api/evidence?url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FKilowatt-hour`] : [],
     });
   });
 
   app.get("/openapi.json", (req, res) => {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-    res.json({
+    const document = {
       openapi: "3.1.0",
       info: {
         title: "FreshFact Evidence API",
         version: "1.0.0",
         description:
-          "Pay-per-request fresh web evidence over x402. Purchases are currently paused for output quality review; paid routes return HTTP 503 before payment.",
+          evidenceEnabled ? "FreshFact Evidence retrieves public page text and provenance for $0.01 USDC on Base. Output is delivered after payment settlement." : "Pay-per-request fresh web evidence over x402. Purchases are currently paused for output quality review; paid routes return HTTP 503 before payment.",
       },
-      "x-service-status": "paused",
+      "x-service-status": evidenceEnabled ? "active" : "paused",
       servers: [{ url: baseUrl }],
       components: {
         securitySchemes: {
@@ -678,7 +687,7 @@ ${baseUrl}/.well-known/x402-catalog.json
         "/api/evidence": {
           get: {
             summary:
-              "Retrieve current clean evidence from a public web URL",
+              "Retrieve public page text with provenance and reported cache age",
             description: "The complete deliverable is prepared and validated before x402 payment is requested. Invalid, unavailable, or unusable sources are rejected without payment.",
             security: [{ x402Payment: [] }],
             "x-payment-info": {
@@ -765,7 +774,10 @@ ${baseUrl}/.well-known/x402-catalog.json
           },
         },
       },
-    });
+    };
+    delete document.paths["/api/verify"];
+    delete document.paths["/api/research"];
+    res.json(document);
   });
 
   // Probing agents read the 402 body before paying. The PAYMENT-REQUIRED
@@ -787,8 +799,6 @@ ${baseUrl}/.well-known/x402-catalog.json
     },
     products: [
       { method: "GET", path: "/api/evidence", price: "0.01" },
-      { method: "POST", path: "/api/verify", price: "0.03" },
-      { method: "POST", path: "/api/research", price: "0.05" },
     ],
   };
 
@@ -816,7 +826,7 @@ ${baseUrl}/.well-known/x402-catalog.json
       res.set("Referrer-Policy", "no-referrer");
       res.set("X-Robots-Tag", "noindex, nofollow");
       req.privateDeliveryTest = isPrivateDeliveryTest(req);
-      if (req.privateDeliveryTest) return next();
+      if (req.privateDeliveryTest || isPublicEvidenceRequest(req)) return next();
       return res.status(503).json({
         error: "PRODUCT_PAUSED",
         message: "FreshFact paid products are unavailable during a quality review.",
@@ -844,7 +854,10 @@ ${baseUrl}/.well-known/x402-catalog.json
     { "GET /api/evidence": privateTestRoute }, resourceServer,
     { appName: "FreshFact delivery test", testnet: false }, testPaywall,
   );
-  const publicPayment = paymentMiddleware(routes, resourceServer);
+  const publicPayment = paymentMiddleware(
+    { "GET /api/evidence": routes["GET /api/evidence"] }, resourceServer,
+    { appName: "FreshFact Evidence", testnet: false }, testPaywall,
+  );
   app.use((req, res, next) => {
     return (req.privateDeliveryTest ? privateTestPayment : publicPayment)(req, res, next);
   });
@@ -1025,16 +1038,7 @@ ${baseUrl}/.well-known/x402-catalog.json
           contentType,
           redirectChain,
         },
-        freshness: {
-          retrievedAt: new Date().toISOString(),
-          etag: response.headers.get("etag") || null,
-          lastModified:
-            response.headers.get("last-modified") || null,
-          ageSeconds:
-            response.headers.get("age") === null
-              ? null
-              : Number(response.headers.get("age")),
-        },
+        freshness: sourceFreshness(response.headers),
         integrity: {
           algorithm: "sha256",
           contentHash: crypto
