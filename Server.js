@@ -6,6 +6,7 @@ const { Agent } = require("undici");
 const { validateSources, validateClaim, validateQuery, evidenceFromPage, searchWikipedia } = require("./products");
 const { extractReadableText } = require("./readableText");
 const { PreflightError, createPreflightGate } = require("./preflightGate");
+const { isPrivateDeliveryTest } = require("./privateDeliveryTest");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -306,6 +307,9 @@ async function start() {
 
   const { ExactEvmScheme } =
     await import("@x402/evm/exact/server");
+
+  const { createPaywall } = await import("@x402/paywall");
+  const { evmPaywall } = await import("@x402/paywall/evm");
 
   const { createCdpFacilitatorClient } =
     await import("@coinbase/cdp-sdk/x402");
@@ -807,6 +811,11 @@ ${baseUrl}/.well-known/x402-catalog.json
   // review. This runs before x402 verification or settlement.
   app.use((req, res, next) => {
     if (PAID_PATHS.has(req.path)) {
+      res.set("Cache-Control", "private, no-store");
+      res.set("Referrer-Policy", "no-referrer");
+      res.set("X-Robots-Tag", "noindex, nofollow");
+      req.privateDeliveryTest = isPrivateDeliveryTest(req);
+      if (req.privateDeliveryTest) return next();
       return res.status(503).json({
         error: "PRODUCT_PAUSED",
         message: "FreshFact paid products are unavailable during a quality review.",
@@ -824,7 +833,20 @@ ${baseUrl}/.well-known/x402-catalog.json
     prepare: preparePaidResponse,
   }));
 
-  app.use(paymentMiddleware(routes, resourceServer));
+  // The private test uses the actual Evidence deliverable and payment scheme,
+  // without publishing its access URL through Bazaar discovery.
+  const privateTestRoute = { ...routes["GET /api/evidence"] };
+  delete privateTestRoute.extensions;
+  const testPaywall = createPaywall().withNetwork(evmPaywall)
+    .withConfig({ appName: "FreshFact delivery test", testnet: false }).build();
+  const privateTestPayment = paymentMiddleware(
+    { "GET /api/evidence": privateTestRoute }, resourceServer,
+    { appName: "FreshFact delivery test", testnet: false }, testPaywall,
+  );
+  const publicPayment = paymentMiddleware(routes, resourceServer);
+  app.use((req, res, next) => {
+    return (req.privateDeliveryTest ? privateTestPayment : publicPayment)(req, res, next);
+  });
 
   async function readEvidencePage(url) {
     const fetched = await fetchPublicText(url);
