@@ -23,6 +23,18 @@ test("a heading-only page is not a usable product", () => {
   assert.equal(result.usable, false);
 });
 
+test("an upstream soft-error page is not a billable product", () => {
+  for (const message of [
+    "Site Unavailable Unable to access this site.",
+    "Access Denied You do not have permission to view this page.",
+    "Just a moment Checking your browser before accessing the site.",
+  ]) {
+    const result = extractReadableText(load(`<main><p>${message}</p></main>`), 30000);
+    assert.equal(result.usable, false);
+    assert.equal(result.rejectionReason, "SOURCE_ERROR_PAGE");
+  }
+});
+
 test("nested page blocks are not duplicated", () => {
   const result = extractReadableText(load("<main><section><h1>Guide</h1><div><p>Follow these steps carefully.</p></div></section></main>"), 30000);
   assert.equal(result.text, "Guide\n\nFollow these steps carefully.");

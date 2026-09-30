@@ -7,6 +7,13 @@ const CONTAINER_TAGS = new Set([
   "tbody", "tfoot", "tr", "dl", "details", "figure",
 ]);
 const SKIP_TAGS = new Set(["nav", "footer", "aside", "script", "style", "noscript", "svg", "canvas", "template", "form", "button"]);
+const SOFT_ERROR_PATTERNS = [
+  /^site unavailable\b/i,
+  /^service unavailable\b/i,
+  /^access denied\b/i,
+  /^unable to access (?:this|the) site\b/i,
+  /^just a moment\b/i,
+];
 
 function normalize(value) {
   return String(value || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
@@ -76,9 +83,17 @@ function extractReadableText($, maxChars) {
     .map(({ start, end }) => text.slice(start, end))
     .join(" ")
     .trim();
-  const usable = substantiveText.length >= 20 &&
+  const softError = substantiveText.length <= 500 &&
+    SOFT_ERROR_PATTERNS.some((pattern) => pattern.test(substantiveText));
+  const usable = !softError && substantiveText.length >= 20 &&
     substantiveText.split(/\s+/).filter(Boolean).length >= 4;
-  return { text, sections, truncated: fullText.length > text.length, usable };
+  return {
+    text,
+    sections,
+    truncated: fullText.length > text.length,
+    usable,
+    rejectionReason: softError ? "SOURCE_ERROR_PAGE" : null,
+  };
 }
 
 module.exports = { extractReadableText };
