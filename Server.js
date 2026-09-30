@@ -313,9 +313,6 @@ async function start() {
   const { ExactEvmScheme } =
     await import("@x402/evm/exact/server");
 
-  const { createPaywall } = await import("@x402/paywall");
-  const { evmPaywall } = await import("@x402/paywall/evm");
-
   const { createCdpFacilitatorClient } =
     await import("@coinbase/cdp-sdk/x402");
 
@@ -848,15 +845,11 @@ ${baseUrl}/.well-known/x402-catalog.json
   // without publishing its access URL through Bazaar discovery.
   const privateTestRoute = { ...routes["GET /api/evidence"] };
   delete privateTestRoute.extensions;
-  const testPaywall = createPaywall().withNetwork(evmPaywall)
-    .withConfig({ appName: "FreshFact delivery test", testnet: false }).build();
   const privateTestPayment = paymentMiddleware(
     { "GET /api/evidence": privateTestRoute }, resourceServer,
-    { appName: "FreshFact delivery test", testnet: false }, testPaywall,
   );
   const publicPayment = paymentMiddleware(
     { "GET /api/evidence": routes["GET /api/evidence"] }, resourceServer,
-    { appName: "FreshFact Evidence", testnet: false }, testPaywall,
   );
   app.use((req, res, next) => {
     return (req.privateDeliveryTest ? privateTestPayment : publicPayment)(req, res, next);
