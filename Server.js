@@ -478,6 +478,23 @@ async function start() {
   // Public stateless APIs support wallet clients hosted on other origins.
   app.use((req, res, next) => {
     if (!PAID_PATHS.has(req.path)) return next();
+    // This client's display still reads the v1 amount label for v2 quotes.
+    // Keep canonical v2 amount and only add an identical display alias.
+    if (req.get("Origin") === "https://playground.x402instant.com") {
+      const setHeader = res.setHeader.bind(res);
+      res.setHeader = (name, value) => {
+        if (String(name).toLowerCase() === "payment-required" && typeof value === "string") {
+          try {
+            const quote = JSON.parse(Buffer.from(value, "base64").toString("utf8"));
+            if (quote.x402Version === 2 && Array.isArray(quote.accepts)) {
+              quote.accepts = quote.accepts.map((offer) => ({ ...offer, maxAmountRequired: offer.amount }));
+              value = Buffer.from(JSON.stringify(quote)).toString("base64");
+            }
+          } catch { /* Preserve the original header if it cannot be decoded. */ }
+        }
+        return setHeader(name, value);
+      };
+    }
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, PAYMENT-SIGNATURE, X-PAYMENT");
