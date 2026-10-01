@@ -6,8 +6,9 @@ const { paymentMiddlewareFromHTTPServer } = require("@x402/express");
 // This exercises the installed middleware's response buffering with a stub
 // facilitator boundary. It does not claim to perform an on-chain payment.
 test("actual x402 middleware withholds output until successful settlement", async (t) => {
+  for (const path of ["/api/evidence", "/api/verify", "/api/research"]) {
   for (const mode of ["unpaid", "invalid", "failed-settlement", "paid"]) {
-    await t.test(mode, async () => {
+    await t.test(path + " " + mode, async () => {
       let delivered = 0;
       let settled = false;
       const server = {
@@ -25,7 +26,7 @@ test("actual x402 middleware withholds output until successful settlement", asyn
       };
       const app = express();
       app.use(paymentMiddlewareFromHTTPServer(server, undefined, undefined, false));
-      app.get("/api/evidence", (req, res) => {
+      app.all(path, (req, res) => {
         delivered += 1;
         assert.equal(settled, false);
         res.json({ service: "FreshFact Evidence", data: { text: "private product content" } });
@@ -33,7 +34,7 @@ test("actual x402 middleware withholds output until successful settlement", asyn
       const listener = app.listen(0, "127.0.0.1");
       await new Promise((resolve) => listener.once("listening", resolve));
       try {
-        const response = await fetch(`http://127.0.0.1:${listener.address().port}/api/evidence`);
+        const response = await fetch(`http://127.0.0.1:${listener.address().port}${path}`, { method: path === "/api/evidence" ? "GET" : "POST" });
         const body = await response.json();
         if (mode === "paid") {
           assert.equal(response.status, 200);
@@ -50,5 +51,6 @@ test("actual x402 middleware withholds output until successful settlement", asyn
         await new Promise((resolve) => listener.close(resolve));
       }
     });
+  }
   }
 });

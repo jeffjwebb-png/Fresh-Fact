@@ -23,3 +23,7 @@ The extractor-only 25-source benchmark returned 19 usable expected outputs, four
 ## Commercial evidence
 
 No independent paid buyer, repeat buyer or outside revenue verified. Owner payments are excluded. Maintain this distinction when reading payment telemetry.
+
+## Verify and Research validation — September 30 Pacific evening
+
+User authorized completing and enabling both products autonomously. Tested production preparation functions with contradictory passages, exact decimal quantities, unavailable sources and no matches. Live Wikipedia retrieval returned the correct 3.6 megajoules conversion and three article sources for Research. Fixed decimal sentence splitting and scores counting hidden truncated words. Tests expanded to 45 including installed x402 middleware tests for all three routes using a stub facilitator (not an on-chain transaction). Activate FRESHFACT_PRODUCTS_ENABLED=true after deployment and verify live POST challenges and before-payment errors. Verify is lexical passage retrieval, not a truth verdict. Research is English Wikipedia only. No paid transaction for these new endpoints has been performed by the assistant. Continue these recorded milestones rather than requesting repeat Evidence tests.

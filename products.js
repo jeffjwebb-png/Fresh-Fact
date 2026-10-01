@@ -35,11 +35,12 @@ function passageMatches(query, text, limit = 3) {
   const terms = [...new Set((query.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || [])
     .filter((term) => !new Set(["the", "and", "for", "with", "from", "that", "this", "was", "were", "are", "has", "have", "had", "not", "but"]).has(term)))];
   if (terms.length === 0) return [];
-  const passages = cleanText(text).match(/[^.!?]+(?:[.!?]+|$)/g) || [];
+  const passages = cleanText(text).split(/(?<=[.!?])\s+(?=[\p{Lu}\p{N}])/u);
   return passages.map((passage, index) => {
-    const exact = passage.toLowerCase();
+    const visible = passage.trim().slice(0, 700);
+    const exact = visible.toLowerCase();
     const matchedTerms = terms.filter((term) => new RegExp(`(^|[^\\p{L}\\p{N}])${term}([^\\p{L}\\p{N}]|$)`, "u").test(exact));
-    return { passage: passage.trim().slice(0, 700), matchedTerms, score: matchedTerms.length / terms.length, index };
+    return { passage: visible, matchedTerms, score: matchedTerms.length / terms.length, index };
   }).filter((item) => item.score > 0 && item.passage)
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .slice(0, limit)

@@ -12,6 +12,9 @@ const { evidenceIsEnabled, isPublicEvidenceRequest } = require("./evidenceReleas
 const { SOURCE_CACHE_HEADERS, sourceFreshness } = require("./sourceFreshness");
 const evidenceEnabled = evidenceIsEnabled();
 
+const { createProductPreparers } = require("./productDelivery");
+const productsEnabled = process.env.FRESHFACT_PRODUCTS_ENABLED === "true";
+const productStatus = productsEnabled ? "Evidence, Verify and Wikipedia Research are available." : "Evidence is available; Verify and Research remain paused.";
 const app = express();
 app.set("trust proxy", 1);
 
@@ -531,7 +534,7 @@ async function start() {
   <h2>Paid endpoint</h2>
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
 
-  <h2>Planned products · purchases unavailable</h2>
+  <h2>${productsEnabled ? "More available products" : "Planned products · purchases unavailable"}</h2>
   <p><strong>FreshFact Verify · $0.03:</strong> POST /api/verify with JSON {"claim":"...","urls":["https://example.com"]}. Returns relevant passages and source fingerprints. It does not make a truth determination.</p>
   <p><strong>FreshFact Research · $0.05:</strong> POST /api/research with JSON {"query":"..."}. Searches English Wikipedia and retrieves up to three pages. It does not search the live web.</p>
 
@@ -549,7 +552,7 @@ async function start() {
   <h2>Machine access</h2>
   <p><a href="/openapi.json">OpenAPI</a> · <a href="/llms.txt">llms.txt</a> · <a href="/.well-known/x402-catalog.json">Discovery metadata</a> · <a href="/health">Health</a></p>
 
-  <p>${evidenceEnabled ? "Evidence output is delivered after successful payment settlement. Verify and Research remain unavailable for purchase." : "Paid routes and machine discovery are unavailable until product quality has been verified."}</p>
+  <p>${evidenceEnabled ? (productsEnabled ? "Product output is delivered after successful payment settlement. Verify locates related passages, not truth verdicts. Research searches English Wikipedia only." : "Evidence output is delivered after successful payment settlement. Verify and Research remain unavailable for purchase.") : "Paid routes and machine discovery are unavailable until product quality has been verified."}</p>
 </body>
 </html>`);
   });
@@ -561,6 +564,8 @@ async function start() {
       service: "FreshFact Evidence",
       product: "FreshFact Evidence",
       evidenceStatus: evidenceEnabled ? "active" : "paused",
+      verifyStatus: productsEnabled ? "active" : "paused",
+      researchStatus: productsEnabled ? "active" : "paused",
       release: process.env.RENDER_GIT_COMMIT || "local",
       timestamp: new Date().toISOString(),
     });
@@ -572,7 +577,7 @@ async function start() {
     res.type("text/plain").send(
 `# FreshFact
 
-Status: ${evidenceEnabled ? "Evidence is active at $0.01 USDC per request on Base. Verify and Research are paused." : "paused for output quality review. Paid routes return HTTP 503 before payment, so no payment is accepted while paused."}
+Status: ${evidenceEnabled ? (productsEnabled ? "Evidence ($0.01), Verify ($0.03) and Wikipedia Research ($0.05) are active on Base USDC." : "Evidence is active at $0.01 USDC per request on Base. Verify and Research are paused.") : "paused for output quality review. Paid routes return HTTP 503 before payment, so no payment is accepted while paused."}
 
 FreshFact provides source text and retrieval provenance to software agents over x402 when active. Sources may serve cached copies; sourceCacheAgeSeconds reports the upstream cache age when available, while retrievedAt is the retrieval timestamp. FreshFact requests cache revalidation but cannot guarantee the source honors it.
 
@@ -582,7 +587,7 @@ GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
 Price: $0.01 USDC
 Network: Base mainnet (eip155:8453)
 
-Planned, unavailable for purchase: Verify finds related passages in supplied public pages; Research searches English Wikipedia. Neither is a truth verdict.
+${productsEnabled ? "Available: POST /api/verify ($0.03) accepts claim and urls; POST /api/research ($0.05) accepts query." : "Planned, unavailable for purchase:"} Verify finds related passages in supplied public pages; Research searches English Wikipedia. Neither is a truth verdict.
 
 Returns clean page text plus title, description, canonical URL, published/modified dates when available, HTTP freshness headers, redirect chain, word count, SHA-256 content hash, source URL and retrieval timestamp.
 When active, FreshFact prepares and validates the complete deliverable before requesting x402 payment. Invalid or unusable sources are rejected without requesting payment.
@@ -602,7 +607,7 @@ ${baseUrl}/.well-known/x402-catalog.json
       version: "1.0.0",
       status: evidenceEnabled ? "active" : "paused",
       purchasable: evidenceEnabled,
-      statusMessage: evidenceEnabled ? "Evidence is available; Verify and Research remain paused." : "Paid routes are paused for output quality review and return HTTP 503 before payment.",
+      statusMessage: evidenceEnabled ? productStatus : "Paid routes are paused for output quality review and return HTTP 503 before payment.",
       description:
         "Public URL in, extracted source text and retrieval provenance out. Reported cache age is included when available.",
       paymentProtocol: "x402",
@@ -641,7 +646,7 @@ ${baseUrl}/.well-known/x402-catalog.json
       docs: `${baseUrl}/openapi.json`,
       llms: `${baseUrl}/llms.txt`,
     };
-    if (evidenceEnabled) catalog.resources = catalog.plannedResources.splice(0, 1);
+    if (evidenceEnabled) catalog.resources = catalog.plannedResources.splice(0, productsEnabled ? 3 : 1);
     res.json(catalog);
   });
 
@@ -652,8 +657,8 @@ ${baseUrl}/.well-known/x402-catalog.json
       version: 1,
       status: evidenceEnabled ? "active" : "paused",
       purchasable: evidenceEnabled,
-      statusMessage: evidenceEnabled ? "Evidence is available; Verify and Research remain paused." : "Paid routes are paused for output quality review and return HTTP 503 before payment.",
-      resources: evidenceEnabled ? [`${baseUrl}/api/evidence?url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FKilowatt-hour`] : [],
+      statusMessage: evidenceEnabled ? productStatus : "Paid routes are paused for output quality review and return HTTP 503 before payment.",
+      resources: evidenceEnabled ? [`${baseUrl}/api/evidence?url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FKilowatt-hour`, ...(productsEnabled ? [`${baseUrl}/api/verify`, `${baseUrl}/api/research`] : [])] : [],
     });
   });
 
@@ -772,8 +777,10 @@ ${baseUrl}/.well-known/x402-catalog.json
         },
       },
     };
-    delete document.paths["/api/verify"];
-    delete document.paths["/api/research"];
+    if (!productsEnabled) {
+      delete document.paths["/api/verify"];
+      delete document.paths["/api/research"];
+    }
     res.json(document);
   });
 
@@ -796,6 +803,7 @@ ${baseUrl}/.well-known/x402-catalog.json
     },
     products: [
       { method: "GET", path: "/api/evidence", price: "0.01" },
+      ...(productsEnabled ? [{method:"POST",path:"/api/verify",price:"0.03"},{method:"POST",path:"/api/research",price:"0.05"}] : []),
     ],
   };
 
@@ -823,7 +831,7 @@ ${baseUrl}/.well-known/x402-catalog.json
       res.set("Referrer-Policy", "no-referrer");
       res.set("X-Robots-Tag", "noindex, nofollow");
       req.privateDeliveryTest = isPrivateDeliveryTest(req);
-      if (req.privateDeliveryTest || isPublicEvidenceRequest(req)) return next();
+      if (req.privateDeliveryTest || isPublicEvidenceRequest(req) || (productsEnabled && req.method === "POST" && ["/api/verify", "/api/research"].includes(req.path))) return next();
       return res.status(503).json({
         error: "PRODUCT_PAUSED",
         message: "FreshFact paid products are unavailable during a quality review.",
@@ -849,7 +857,7 @@ ${baseUrl}/.well-known/x402-catalog.json
     { "GET /api/evidence": privateTestRoute }, resourceServer,
   );
   const publicPayment = paymentMiddleware(
-    { "GET /api/evidence": routes["GET /api/evidence"] }, resourceServer,
+    productsEnabled ? routes : { "GET /api/evidence": routes["GET /api/evidence"] }, resourceServer,
   );
   app.use((req, res, next) => {
     return (req.privateDeliveryTest ? privateTestPayment : publicPayment)(req, res, next);
@@ -880,58 +888,9 @@ ${baseUrl}/.well-known/x402-catalog.json
     throw new PreflightError(405, "METHOD_NOT_ALLOWED", "This method is not available; no payment was requested.");
   }
 
-  async function prepareVerifyResponse(req) {
-    try {
-      const pages = await Promise.all(req.validatedUrls.map(readEvidencePage));
-      const sources = pages.map((page) => evidenceFromPage(page, req.validatedClaim));
-      if (!sources.some((source) => source.passages.length)) {
-        throw new PreflightError(422, "NO_RELEVANT_PASSAGES", "Sources contained no passages matching the claim; no payment was requested.");
-      }
-      return {
-        service: "FreshFact Verify", version: "1.0.0", claim: req.validatedClaim,
-        assessment: "related_passages_found",
-        scope: "Supplied URLs only; lexical matching, not semantic fact checking.",
-        sources,
-        note: "Related passages may contradict or merely mention the claim. Read each source before treating it as support.",
-      };
-    } catch (error) {
-      if (error instanceof PreflightError) throw error;
-      throw new PreflightError(502, "SOURCE_UNAVAILABLE", "Could not retrieve all supplied sources; no payment was requested.");
-    }
-  }
+  const { prepareVerifyResponse, prepareResearchResponse } = createProductPreparers({ readEvidencePage, searchWikipedia });
 
-  app.post("/api/verify", (req, res) => {
-    sendDelivery(res, req.preparedResponse);
-  });
-
-  async function prepareResearchResponse(req) {
-    try {
-      const urls = await searchWikipedia(req.validatedQuery);
-      if (!urls.length) {
-        throw new PreflightError(422, "NO_RESULTS", "No Wikipedia articles matched this query; no payment was requested.");
-      }
-      const results = await Promise.allSettled(urls.map(readEvidencePage));
-      const sources = results.filter((result) => result.status === "fulfilled")
-        .map((result) => evidenceFromPage(result.value, req.validatedQuery));
-      if (!sources.length && urls.length) throw new Error("SOURCE_UNAVAILABLE");
-      if (!sources.some((source) => source.passages.length)) {
-        throw new PreflightError(422, "NO_RELEVANT_PASSAGES", "Retrieved articles contained no passages matching the query; no payment was requested.");
-      }
-      return {
-        service: "FreshFact Research", version: "1.0.0", query: req.validatedQuery,
-        scope: "English Wikipedia only", searchedAt: new Date().toISOString(),
-        sources, unavailableSourceCount: results.length - sources.length,
-        note: "Passages are lexical matches, not a truth assessment. Wikipedia coverage and article update times vary.",
-      };
-    } catch (error) {
-      if (error instanceof PreflightError) throw error;
-      throw new PreflightError(502, "RESEARCH_UNAVAILABLE", "Could not complete Wikipedia research; no payment was requested.");
-    }
-  }
-
-  app.post("/api/research", (req, res) => {
-    sendDelivery(res, req.preparedResponse);
-  });
+  app.post(["/api/verify", "/api/research"], (req, res) => sendDelivery(res, req.preparedResponse));
 
   async function prepareEvidenceResponse(req) {
     const requestedUrl =
