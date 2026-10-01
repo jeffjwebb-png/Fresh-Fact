@@ -844,7 +844,16 @@ ${baseUrl}/.well-known/x402-catalog.json
         !Array.isArray(payload) &&
         Object.keys(payload).length === 0;
       if (res.statusCode === 402 && isEmptyObject) {
-        return originalJson(PAYMENT_QUOTE);
+        let rejectionReason = null;
+        try {
+          const header = res.getHeader("PAYMENT-REQUIRED");
+          const quote = JSON.parse(Buffer.from(String(header), "base64").toString("utf8"));
+          if (typeof quote.error === "string" && /^[a-zA-Z0-9_ .:-]{1,160}$/.test(quote.error)) rejectionReason = quote.error;
+        } catch { /* The original payment challenge remains authoritative. */ }
+        if (req.get("PAYMENT-SIGNATURE") || req.get("X-PAYMENT")) {
+          console.log(JSON.stringify({ type: "payment_rejected", path: req.path, reason: rejectionReason || "unspecified", at: new Date().toISOString() }));
+        }
+        return originalJson({ ...PAYMENT_QUOTE, ...(rejectionReason ? { paymentError: rejectionReason } : {}) });
       }
       return originalJson(payload);
     };
