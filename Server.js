@@ -475,6 +475,17 @@ async function start() {
     next();
   });
 
+  // Public stateless APIs support wallet clients hosted on other origins.
+  app.use((req, res, next) => {
+    if (!PAID_PATHS.has(req.path)) return next();
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, PAYMENT-SIGNATURE, X-PAYMENT");
+    res.set("Access-Control-Expose-Headers", "PAYMENT-REQUIRED, PAYMENT-RESPONSE, X-PAYMENT-RESPONSE");
+    if (req.method === "OPTIONS") return res.status(204).end();
+    next();
+  });
+
   app.use(express.json({ limit: "16kb", type: "application/json" }));
 
   app.use((error, req, res, next) => {
@@ -830,6 +841,10 @@ ${baseUrl}/.well-known/x402-catalog.json
       res.set("Cache-Control", "private, no-store");
       res.set("Referrer-Policy", "no-referrer");
       res.set("X-Robots-Tag", "noindex, nofollow");
+      if (productsEnabled && req.method !== "POST" && ["/api/verify", "/api/research"].includes(req.path)) {
+        res.set("Allow", "POST, OPTIONS");
+        return res.status(405).json({ error: "METHOD_NOT_ALLOWED", message: "Use POST with a JSON request body and an x402 payment client." });
+      }
       req.privateDeliveryTest = isPrivateDeliveryTest(req);
       if (req.privateDeliveryTest || isPublicEvidenceRequest(req) || (productsEnabled && req.method === "POST" && ["/api/verify", "/api/research"].includes(req.path))) return next();
       return res.status(503).json({
