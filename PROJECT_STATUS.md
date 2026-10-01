@@ -27,3 +27,13 @@ No independent paid buyer, repeat buyer or outside revenue verified. Owner payme
 ## Verify and Research validation — September 30 Pacific evening
 
 User authorized completing and enabling both products autonomously. Tested production preparation functions with contradictory passages, exact decimal quantities, unavailable sources and no matches. Live Wikipedia retrieval returned the correct 3.6 megajoules conversion and three article sources for Research. Fixed decimal sentence splitting and scores counting hidden truncated words. Tests expanded to 45 including installed x402 middleware tests for all three routes using a stub facilitator (not an on-chain transaction). Activate FRESHFACT_PRODUCTS_ENABLED=true after deployment and verify live POST challenges and before-payment errors. Verify is lexical passage retrieval, not a truth verdict. Research is English Wikipedia only. No paid transaction for these new endpoints has been performed by the assistant. Continue these recorded milestones rather than requesting repeat Evidence tests.
+
+
+## September 30 payment-client compatibility checkpoint
+- All three products activated and deployed in 6ac6890. Owner reports ten one-cent transactions total; no three-cent Verify settlement reported.
+- Browser CORS and method reporting deployed in faa5fc2.
+- x402Instant UI crashed reading legacy maxAmountRequired; identical display alias scoped to its origin deployed in f7c86ed. Verified unpaid Verify challenge renders 0.03 and Connect Wallet in Chrome.
+- Owner paid retry at 2026-10-01T01:19:58.819Z returned 402, paymentPresented=true, deliverySucceeded=false. This is not a sale.
+- Safe rejection diagnostics deployed in 271aa6d. Subsequent owner screenshot shows No matching payment requirements.
+- Reproduced strict installed x402 requirements matcher rejecting legacy client labels. Normalize only redundant maxAmountRequired/name/version when identical to canonical amount/domain; signed authorization remains unchanged. 49 tests pass, including installed matcher accepting normalized terms and rejecting changed amounts.
+- Real paid Verify and Research fulfillment remains unverified. Do not reset prior Evidence payment evidence or count owner tests as external revenue.

@@ -1,3 +1,4 @@
+const { normalizePlaygroundPayment } = require("./paymentClientCompatibility");
 const express = require("express");
 const crypto = require("crypto");
 const dns = require("dns").promises;
@@ -481,6 +482,10 @@ async function start() {
     // This client's display still reads the v1 amount label for v2 quotes.
     // Keep canonical v2 amount and only add an identical display alias.
     if (req.get("Origin") === "https://playground.x402instant.com") {
+      if (typeof req.headers["payment-signature"] === "string") {
+        req.headers["payment-signature"] = normalizePlaygroundPayment(req.headers["payment-signature"]);
+      }
+
       const setHeader = res.setHeader.bind(res);
       res.setHeader = (name, value) => {
         if (String(name).toLowerCase() === "payment-required" && typeof value === "string") {
