@@ -1,6 +1,6 @@
 # FreshFact project status
 
-Updated 2026-09-30. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-01. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
 
 ## Completed paid delivery milestone
 
@@ -8,17 +8,25 @@ Owner private tests on September 29 Pacific time succeeded. Render application l
 
 The user pasted the delivered Kilowatt-hour Wikipedia Evidence JSON: retrievedAt 2026-09-30T04:11:06.117Z; wordCount 2450; truncated=false; SHA-256 9c80ba044ce7732f58b474e5b169f5af39227d572a156495355cc7d953b0390c. Prior conversation recorded payment confirmation and matching text hash. This demonstrates delivery on the tested version; it is not a claim that all future sources or releases are error-free.
 
-## Current verified implementation
+## Current release — October 1, 2026
 
-Code release 8437d32ea14c2f21535d2b65cb9333ca55fbf166 has 31 passing tests, including installed x402 middleware settlement buffering, source rejection before payment, and prepared-response reuse. API and MCP audits report zero known vulnerabilities as of September 30. Unicode/math fixes, cache age clarification and soft-error rejection are implemented. GitHub Quality run 36737775677 passed.
+Active code: 74772428a5c1056675bdee29ba7e74a13875708c. Render deployment dep-dauremjm8hqs7390vst0 completed successfully at 2026-10-01T01:29:45.863Z. All three routes are active: Evidence $0.01, Verify $0.03, Research $0.05 USDC on Base mainnet. User explicitly authorized enabling all three on September 30. Earlier paused-release instructions are superseded.
 
-## Release decision
+49 tests pass, including strict installed x402 requirements matching and unchanged authorization after client-label normalization. Settlement buffering tests use a stub facilitator; they do not perform an on-chain payment. Production npm audit on October 1 reports zero known vulnerabilities.
 
-User authorized autonomous readiness checks and deployment on September 30. Enable GET Evidence only using FRESHFACT_EVIDENCE_ENABLED=true, retaining existing $0.01 USDC Base price and Bazaar metadata. Verify and Research remain paused. Verify live 402 network/asset/amount, discovery, health and pre-payment invalid-source rejection after deployment. No new funds or credentials required.
+At 2026-10-01T15:51Z, health, landing page, OpenAPI, llms.txt and both discovery documents returned 200. Live Verify and Research POST challenges returned x402 v2, eip155:8453, 30000/50000 atomic USDC respectively, and Bazaar metadata. No error-level Render logs found since 2026-10-01T01:30Z.
 
-## Limits and next work
+## Current blocker and next objective
 
-The extractor-only 25-source benchmark returned 19 usable expected outputs, four timeouts and two rejected soft-error pages. It does not exercise production network restrictions, settlement, prove premium value, or compare against paid competitors. Do not label it end-to-end delivery verification. Source failures are rejected before payment. Pricing and buyer demand remain unproven; do not reopen or add Verify/Research based solely on this Evidence milestone.
+Real paid Verify and Research delivery remains unverified. Available logs since the compatibility fix contain only our intentional invalid-signature probe (2026-10-01T01:30:26.464Z); exclude that probe from buyers and payments. The probe passed requirements matching and failed signature verification, as expected. Do not ask to repeat completed Evidence tests. Owner retains wallet custody and spending approval.
+
+Verify returns lexical passage matches, not a semantic truth verdict. Research searches English Wikipedia only. Do not advertise broader capabilities. Source failures occur before payment requests.
+
+Discovery remains unconfirmed: October 1 web searches found no FreshFact listing, but this is not exhaustive catalog evidence. The fetched x402.new API response was only page 1 (24 of 14,201 listings); absence from that page cannot establish absence from the directory. No distribution submissions or paid promotion performed.
+
+Highest-value objective: complete one wallet-approved Verify delivery and one Research delivery, inspect the delivered passages/settlement receipts, and then test one specific independent agent task. Avoid adding products until usefulness and buyer demand are demonstrated.
+
+Gross-revenue target math, not a forecast: $0.01 × 1,000 customers × 100 calls/day = $1,000/day; $0.03 × 1,000 × 34 = $1,020/day; $0.05 × 1,000 × 20 = $1,000/day. Costs and fees reduce net income.
 
 ## Commercial evidence
 
