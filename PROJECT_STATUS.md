@@ -1,6 +1,6 @@
 # FreshFact project status
 
-Updated 2026-10-01. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-02. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
 
 ## Completed paid delivery milestone
 
@@ -8,13 +8,13 @@ Owner private tests on September 29 Pacific time succeeded. Render application l
 
 The user pasted the delivered Kilowatt-hour Wikipedia Evidence JSON: retrievedAt 2026-09-30T04:11:06.117Z; wordCount 2450; truncated=false; SHA-256 9c80ba044ce7732f58b474e5b169f5af39227d572a156495355cc7d953b0390c. Prior conversation recorded payment confirmation and matching text hash. This demonstrates delivery on the tested version; it is not a claim that all future sources or releases are error-free.
 
-## Current release — October 1, 2026
+## Current release — October 2, 2026
 
-Active code: 74772428a5c1056675bdee29ba7e74a13875708c. Render deployment dep-dauremjm8hqs7390vst0 completed successfully at 2026-10-01T01:29:45.863Z. All three routes are active: Evidence $0.01, Verify $0.03, Research $0.05 USDC on Base mainnet. User explicitly authorized enabling all three on September 30. Earlier paused-release instructions are superseded.
+Active code: c92efc5d5de65a4406bafbb86f3011b98f56cef2. Render deployment dep-dav846jbc2fs73devvbg completed successfully at 2026-10-01T15:54:49.730802Z. All three routes are active: Evidence $0.01, Verify $0.03, Research $0.05 USDC on Base mainnet. User explicitly authorized enabling all three on September 30. Earlier paused-release instructions are superseded.
 
 49 tests pass, including strict installed x402 requirements matching and unchanged authorization after client-label normalization. Settlement buffering tests use a stub facilitator; they do not perform an on-chain payment. Production npm audit on October 1 reports zero known vulnerabilities.
 
-At 2026-10-01T15:51Z, health, landing page, OpenAPI, llms.txt and both discovery documents returned 200. Live Verify and Research POST challenges returned x402 v2, eip155:8453, 30000/50000 atomic USDC respectively, and Bazaar metadata. No error-level Render logs found since 2026-10-01T01:30Z.
+At 2026-10-02T16:00Z, health, landing page, OpenAPI, llms.txt and the x402 catalog returned 200. Live Verify and Research POST challenges returned x402 v2, eip155:8453, 30000/50000 atomic USDC respectively, and Bazaar metadata. Forty-nine tests pass and the production dependency audit reports zero known vulnerabilities. No error-level Render logs, successful-delivery events, or payment-rejection events were found between 2026-10-01T15:55Z and 2026-10-02T16:05Z.
 
 ## Current blocker and next objective
 
@@ -22,7 +22,7 @@ Real paid Verify and Research delivery remains unverified. Available logs since 
 
 Verify returns lexical passage matches, not a semantic truth verdict. Research searches English Wikipedia only. Do not advertise broader capabilities. Source failures occur before payment requests.
 
-Discovery remains unconfirmed: October 1 web searches found no FreshFact listing, but this is not exhaustive catalog evidence. The fetched x402.new API response was only page 1 (24 of 14,201 listings); absence from that page cannot establish absence from the directory. No distribution submissions or paid promotion performed.
+Discovery remains unconfirmed. Coinbase's October 2 documentation says a route must pass the public validation endpoint and complete a successful paid call through the CDP Facilitator before Bazaar indexing; the settlement must carry both the Bazaar extension and resource. Attempts from the automation environment to call Coinbase's documented public validator returned HTTP 405, so there is no validator result to claim. No distribution submissions or paid promotion performed.
 
 Highest-value objective: complete one wallet-approved Verify delivery and one Research delivery, inspect the delivered passages/settlement receipts, and then test one specific independent agent task. Avoid adding products until usefulness and buyer demand are demonstrated.
 
