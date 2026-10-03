@@ -1,6 +1,16 @@
 # FreshFact project status
 
-Updated 2026-10-02. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-03. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 3 operational checkpoint
+
+No payment-code commits appeared after the October 2 checkpoint. Render deployment `dep-davtbeff3r2c73aegvig` remained live. The landing page, health, OpenAPI 3.1 document, `llms.txt`, and x402 catalog returned 200; all three correctly formed public requests returned 402 at $0.01/$0.03/$0.05. A private-address Evidence request returned 400 before payment. Forty-nine tests passed and `npm audit --omit=dev` reported zero known vulnerabilities.
+
+No error-level logs or `deliverySucceeded` events were recorded between 2026-10-02T16:04Z and 2026-10-03T15:35Z. Aggregate metrics contained 503 responses, but no corresponding 503 request or application log could be retrieved and repeated live checks succeeded; do not label this a product outage without path-level evidence. CPU was negligible and memory stayed near 100–112 MB on a 512 MB instance.
+
+External discovery improved: x402-trust.com now lists `fresh-fact.onrender.com` as a provider with one endpoint. This proves one independent directory has discovered the host; it does not prove Coinbase Bazaar indexing, a paid call, a buyer, or successful paid delivery. Verify and Research remain absent from any independently verified listing. The official Coinbase validator still returned HTTP 405 from the automation environment.
+
+Commercial evidence is unchanged: zero verified independent paid calls, buyers, repeat buyers, and outside revenue. Exclude all owner tests. The next highest-value objective remains one fully observed, wallet-approved Verify payment with useful output and Bazaar settlement metadata.
 
 ## Completed paid delivery milestone
 
