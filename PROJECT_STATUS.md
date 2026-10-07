@@ -1,6 +1,14 @@
 # FreshFact project status
 
-Updated 2026-10-03. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-07. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 7 security and dependency checkpoint
+
+Reviewed current x402 security research against FreshFact's actual delivery boundary. The installed middleware still runs product preparation before settlement, but FreshFact buffers the response and releases no product output unless settlement succeeds. Product handlers have no purchase-side effects, and the installed-middleware tests cover unpaid, invalid, failed-settlement, and paid requests for all three routes. This mitigates the relevant free-output risk; do not claim that the middleware avoids all pre-settlement computation.
+
+Updated the compatible payment and retrieval dependencies together: x402 packages 2.28.0, Coinbase CDP SDK 1.58.0, and Undici 6.29.0. Express remains on the supported 4.x line rather than taking an unneeded major-version upgrade. All 49 tests pass and `npm audit --omit=dev` reports zero known vulnerabilities.
+
+No independent paid call, buyer, repeat buyer, or outside revenue was found in the latest production logs. Owner tests remain excluded. The highest-value objective is unchanged: one fully observed, wallet-approved $0.03 Verify payment that returns useful output and a settlement receipt. Do not request another Evidence test.
 
 ## October 3 operational checkpoint
 
