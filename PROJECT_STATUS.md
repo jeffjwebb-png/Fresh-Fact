@@ -1,6 +1,14 @@
 # FreshFact project status
 
-Updated 2026-10-07. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-08. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 8 routing and distribution checkpoint
+
+Production remained live on the October 7 dependency release with no error-level logs and no 500/502 application responses. Repeated automated `POST /api/evidence` probes were incorrectly receiving `503 PRODUCT_PAUSED`, even though Evidence is active and its documented method is GET. Corrected enabled paid routes to return an explicit 405 plus the proper `Allow` header for wrong-method requests. This prevents client mistakes and bot probes from being mislabeled as product outages. Fifty tests pass and `npm audit --omit=dev` reports zero known vulnerabilities.
+
+No paid signature was presented and no successful delivery was logged during the checked period. Independent buyers, paid calls, repeat buyers, and outside revenue remain zero; owner tests remain excluded.
+
+PayAPI Market is a free distribution opportunity with MCP and HTTP discovery, but it requires a provider listing and verifies listings with a real settlement. Do not submit contact or wallet details without the owner's involvement. First complete the already-recorded $0.03 Verify delivery objective so the listing can be backed by observed settlement and useful output rather than another unverified claim.
 
 ## October 7 security and dependency checkpoint
 

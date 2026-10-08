@@ -10,6 +10,7 @@ const { PreflightError, createPreflightGate } = require("./preflightGate");
 const { isPrivateDeliveryTest } = require("./privateDeliveryTest");
 const { sendDelivery } = require("./deliveryJson");
 const { evidenceIsEnabled, isPublicEvidenceRequest } = require("./evidenceRelease");
+const { methodRequirement, methodIsAllowed } = require("./paidRouteMethods");
 const { SOURCE_CACHE_HEADERS, sourceFreshness } = require("./sourceFreshness");
 const evidenceEnabled = evidenceIsEnabled();
 
@@ -872,9 +873,16 @@ ${baseUrl}/.well-known/x402-catalog.json
       res.set("Cache-Control", "private, no-store");
       res.set("Referrer-Policy", "no-referrer");
       res.set("X-Robots-Tag", "noindex, nofollow");
-      if (productsEnabled && req.method !== "POST" && ["/api/verify", "/api/research"].includes(req.path)) {
-        res.set("Allow", "POST, OPTIONS");
-        return res.status(405).json({ error: "METHOD_NOT_ALLOWED", message: "Use POST with a JSON request body and an x402 payment client." });
+      const routeIsEnabled = req.path === "/api/evidence" ? evidenceEnabled : productsEnabled;
+      if (routeIsEnabled && !methodIsAllowed(req)) {
+        const requiredMethod = methodRequirement(req.path);
+        res.set("Allow", `${requiredMethod}, OPTIONS`);
+        return res.status(405).json({
+          error: "METHOD_NOT_ALLOWED",
+          message: requiredMethod === "POST"
+            ? "Use POST with a JSON request body and an x402 payment client."
+            : "Use GET with URL query parameters and an x402 payment client.",
+        });
       }
       req.privateDeliveryTest = isPrivateDeliveryTest(req);
       if (req.privateDeliveryTest || isPublicEvidenceRequest(req) || (productsEnabled && req.method === "POST" && ["/api/verify", "/api/research"].includes(req.path))) return next();
