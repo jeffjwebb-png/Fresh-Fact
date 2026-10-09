@@ -14,7 +14,7 @@ These replace the `description` and `serviceName` fields on each route in `Serve
 
 **description:**
 
-> Fetch a public web page at request time and return retrieved page data: extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. Use when an agent needs a dated snapshot of extracted page text. Priced $0.01 per call in USDC on Base. Retrieval can fail after payment; the response carries no truth verdict about the page's contents.
+> Fetch a public web page at request time and return retrieved page data: extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. Use when an agent needs a dated snapshot of extracted page text. Priced $0.01 per call in USDC on Base. FreshFact validates and prepares the result before requesting payment; the response carries no truth verdict about the page's contents.
 
 ### Verify — `POST /api/verify` — $0.03
 
@@ -50,7 +50,7 @@ For x402.new, x402scan, and indexes that import Bazaar resources. Leads with the
 >
 > - **Price:** $0.01 per call in USDC on Base
 > - **No account, no API key** — x402 payment on the request
-> - **Failure policy:** Retrieval may fail after payment; a 502 does not establish whether payment settled
+> - **Failure policy:** Invalid, unavailable, or unusable sources fail before payment is requested; failed settlement releases no product output
 > - **Scope:** public HTML and plain-text URLs, 2 MB transfer limit, 50,000-character text limit, ten-second timeout per hop, up to five redirects
 > - **Not included:** any verdict on whether the page's content is true, accurate, or current
 >
@@ -73,10 +73,10 @@ For an individual building retrieval agents. Short, no pitch-deck register. Send
 >
 > Most retrieval APIs return what's relevant now. A stored response can help an operator review the text their agent received. FreshFact Evidence returns: extracted text, retrieval timestamp, redirect chain, and a SHA-256 hash over the exact text.
 >
-> It's live, it's $0.01 a call in USDC on Base, and there's no key or signup — your agent gets a 402, pays, retries, and gets the result. A fetch can fail after payment; check the response before using the result.
+> It's live, it's $0.01 a call in USDC on Base, and there's no key or signup — your agent gets a 402, pays, retries, and gets the result. FreshFact prepares and validates the result before requesting payment; failed settlement releases no product output.
 >
 > ```
-> curl -i https://fresh-fact.onrender.com/api/evidence
+> curl -i 'https://fresh-fact.onrender.com/api/evidence?url=https%3A%2F%2Fexample.com'
 > ```
 >
 > That returns the payment requirements without paying anything. Would this result be useful in your pipeline? If the provenance block doesn't earn its place in your pipeline, tell me and I'll leave you alone.
@@ -90,10 +90,17 @@ For an individual building retrieval agents. Short, no pitch-deck register. Send
 
 ---
 
-## 4. Two fixes that affect listing quality
+## 4. PayAPI Market submission package
 
-Findings from checking the live 402. Neither is in this file — they're for you to decide on.
+PayAPI's form probes the exact paid URL before it creates a listing. Submit a complete Evidence request, not the homepage or the bare route.
 
-**HTTPS redirect.** `GET /api/evidence` returns a 301 before the real 402. An agent pays an extra round trip on every call. Worth forcing HTTPS at the Render or Cloudflare level instead of redirecting, since latency is one of the constraints buyers select on.
+- **API name:** `FreshFact Evidence`
+- **Paid route:** `https://fresh-fact.onrender.com/api/evidence?url=https%3A%2F%2Fexample.com`
+- **Base URL:** `https://fresh-fact.onrender.com`
+- **Price:** `$0.01` USDC per request on Base
+- **Suggested category:** web/data extraction or data intelligence, whichever label the form currently offers
+- **Description:** Use the long-form Evidence description in section 2
+- **Expected unpaid check:** HTTP 402 with x402 v2, network `eip155:8453`, amount `10000`, asset Base USDC, and `extra.name` equal to `USD Coin`
+- **Expected paid result:** HTTP 200 JSON containing extracted text, source/final URL, HTTP status, retrieval timestamp, redirect history, structured sections, and a SHA-256 content hash
 
-**No receipt or job identifier.** Buyers test "settlement succeeded, job failed" and want payment state and execution state as separate signals. Right now a 502 after payment is documented in the README but not distinguishable in the response itself. Returning a payment reference alongside the error would close a real gap against Tavily, which advertises refunds for upstream failure.
+The owner must enter and confirm the provider name, contact email, and Base payout wallet. The wallet must exactly match the live challenge's `payTo`. Never paste a seed phrase or private key into a listing form.

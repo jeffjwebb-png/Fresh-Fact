@@ -41,6 +41,7 @@ Potential distribution indexes:
 - x402 Bazaar / facilitator discovery
 - x402.new directory
 - x402scan and other public x402 indexes that import Bazaar resources
+- PayAPI Market, which performs its own unpaid challenge check and a real canary settlement before awarding a settlement-verified listing
 
 ### Listing description
 

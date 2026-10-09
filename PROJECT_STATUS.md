@@ -1,6 +1,14 @@
 # FreshFact project status
 
-Updated 2026-10-08. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-09. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 9 listing-readiness checkpoint
+
+The October 8 routing release remains live with no error-level logs and no 500/502/503 responses. Repeated wrong-method Evidence probes now consistently return 405 instead of being mislabeled as a product outage. All 50 tests pass, the dependency audit reports zero known vulnerabilities, and current correctly formed requests still return x402 v2 Base-USDC challenges at $0.01/$0.03/$0.05 with Bazaar metadata.
+
+Corrected stale commercial copy that claimed source retrieval could fail after payment and provided a bare Evidence URL that actually returned 400. The listing package now truthfully says FreshFact prepares source output before requesting payment and gives PayAPI Market an exact probeable URL that returns 402. Added a ready-to-submit PayAPI field checklist while reserving provider name, email, and payout-wallet confirmation for the owner.
+
+No payment signature, successful paid delivery, independent buyer, repeat buyer, or outside revenue was recorded during the checked period. Owner tests remain excluded. The highest-value objective is an owner-confirmed PayAPI submission of the $0.01 Evidence route so its independent canary settlement can test delivery and create MCP/HTTP marketplace visibility.
 
 ## October 8 routing and distribution checkpoint
 
