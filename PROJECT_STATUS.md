@@ -1,6 +1,14 @@
 # FreshFact project status
 
-Updated 2026-10-09. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-16. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 16 revenue-product checkpoint
+
+Revenue is the controlling objective. Evidence is now positioned as an audit-ready evidence receipt rather than a generic scraper. Each paid response includes a deterministic receipt ID, receipt version, exact-content verification instructions, and citation-ready section offsets with independent SHA-256 hashes. Discovery, landing-page, README, and listing copy describe the buyer task: preserve exactly what an agent saw so an answer, alert, recommendation, or business decision can be reviewed later.
+
+Fifty-two tests pass and `npm audit --omit=dev` reports zero known vulnerabilities. The receipt hashes prove which normalized text FreshFact delivered; they do not authenticate the source, prove truth, or create an archive. Store the response when later review is required.
+
+Do not expand Verify or Research until Evidence produces independent demand. The next commercial step is distribution of the $0.01 Evidence Receipt through Bazaar-compatible discovery and PayAPI Market, followed by measurement of independent paid calls and repeat buyers. Owner tests remain excluded from revenue.
 
 ## October 9 listing-readiness checkpoint
 

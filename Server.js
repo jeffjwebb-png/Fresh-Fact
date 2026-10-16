@@ -12,6 +12,7 @@ const { sendDelivery } = require("./deliveryJson");
 const { evidenceIsEnabled, isPublicEvidenceRequest } = require("./evidenceRelease");
 const { methodRequirement, methodIsAllowed } = require("./paidRouteMethods");
 const { SOURCE_CACHE_HEADERS, sourceFreshness } = require("./sourceFreshness");
+const { createEvidenceReceipt } = require("./evidenceReceipt");
 const evidenceEnabled = evidenceIsEnabled();
 
 const { createProductPreparers } = require("./productDelivery");
@@ -364,6 +365,12 @@ async function start() {
       type: "json",
       example: {
         service: "FreshFact Evidence",
+        receipt: {
+          receiptId: "ffr_0123456789abcdef0123456789abcdef",
+          receiptVersion: "1.0",
+          subjectUrl: "https://example.com/",
+          citations: [{ id: "section-1", type: "p", start: 0, end: 29, textHash: "sha256-hex" }],
+        },
         source: {
           finalUrl: "https://example.com/",
           httpStatus: 200,
@@ -383,12 +390,13 @@ async function start() {
         type: "object",
         properties: {
           service: { type: "string" },
+          receipt: { type: "object" },
           source: { type: "object" },
           freshness: { type: "object" },
           integrity: { type: "object" },
           data: { type: "object" },
         },
-        required: ["service", "source", "freshness", "integrity", "data"],
+        required: ["service", "receipt", "source", "freshness", "integrity", "data"],
       },
     },
   });
@@ -437,7 +445,7 @@ async function start() {
         maxTimeoutSeconds: 300,
       },
       description:
-        "Fetch a public web page and return extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. FreshFact prepares and validates the complete response before requesting payment. Priced $0.01 per call in USDC on Base. The response carries no truth verdict about the page contents.",
+        "Create an audit-ready evidence receipt for a public web page: exact normalized text, citation offsets and section hashes, source provenance, retrieval time, redirects, freshness signals, and a SHA-256 content hash. Use when an agent must preserve what it saw for later review. FreshFact prepares and validates the complete response before requesting payment. Priced $0.01 per call in USDC on Base; no truth verdict is provided.",
       mimeType: "application/json",
       serviceName: "FreshFact Evidence",
       tags: ["web", "evidence", "freshness", "research", "agents", "provenance", "audit", "verification", "retrieval", "fetch"],
@@ -551,7 +559,7 @@ async function start() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FreshFact Evidence</title>
-  <meta name="description" content="Web evidence with source provenance for AI agents and software.">
+  <meta name="description" content="Audit-ready web evidence receipts for AI agents.">
   <style>
     body{font-family:system-ui,-apple-system,sans-serif;max-width:900px;margin:0 auto;padding:48px 22px;line-height:1.55}
     code,pre{background:#f3f3f3;border-radius:8px}pre{padding:14px;overflow:auto}
@@ -559,9 +567,9 @@ async function start() {
   </style>
 </head>
 <body>
-  <h1>FreshFact Evidence</h1>
-  <p>Web evidence with source provenance for AI agents and software.</p>
-  <p>Give FreshFact a public URL and receive extracted text, source details, retrieval time, reported source cache age, metadata and an integrity hash in machine-readable JSON.</p>
+  <h1>FreshFact Evidence Receipt</h1>
+  <p>Audit-ready web evidence for AI agents.</p>
+  <p>Give FreshFact a public URL and receive the exact normalized text an agent saw, citation-ready section offsets and hashes, source provenance, retrieval time, freshness signals and a unique receipt ID.</p>
   <p class="price">${evidenceEnabled ? "$0.01 USDC per request on Base." : "Purchases paused during quality review."}</p>
   ${evidenceEnabled ? '<p><a href="/api/evidence?url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FKilowatt-hour">Try Evidence with a kilowatt-hour article</a></p>' : ""}
 
@@ -574,6 +582,8 @@ async function start() {
 
   <h2>What you receive</h2>
   <ul>
+    <li>Unique evidence receipt ID and version</li>
+    <li>Citation-ready section offsets and per-section hashes</li>
     <li>Source retrieval time and reported cache age</li>
     <li>Clean extracted page text</li>
     <li>Source and final URLs plus redirects</li>
@@ -613,7 +623,7 @@ async function start() {
 
 Status: ${evidenceEnabled ? (productsEnabled ? "Evidence ($0.01), Verify ($0.03) and Wikipedia Research ($0.05) are active on Base USDC." : "Evidence is active at $0.01 USDC per request on Base. Verify and Research are paused.") : "paused for output quality review. Paid routes return HTTP 503 before payment, so no payment is accepted while paused."}
 
-FreshFact provides source text and retrieval provenance to software agents over x402 when active. Sources may serve cached copies; sourceCacheAgeSeconds reports the upstream cache age when available, while retrievedAt is the retrieval timestamp. FreshFact requests cache revalidation but cannot guarantee the source honors it.
+FreshFact creates audit-ready web evidence receipts for software agents over x402. Each receipt identifies the exact normalized text delivered, provides citation offsets and section hashes, and records source provenance and retrieval time. Sources may serve cached copies; sourceCacheAgeSeconds reports the upstream cache age when available, while retrievedAt is the retrieval timestamp. FreshFact requests cache revalidation but cannot guarantee the source honors it.
 
 ## Paid endpoint
 GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
@@ -623,7 +633,7 @@ Network: Base mainnet (eip155:8453)
 
 ${productsEnabled ? "Available: POST /api/verify ($0.03) accepts claim and urls; POST /api/research ($0.05) accepts query." : "Planned, unavailable for purchase:"} Verify finds related passages in supplied public pages; Research searches English Wikipedia. Neither is a truth verdict.
 
-Returns clean page text plus title, description, canonical URL, published/modified dates when available, HTTP freshness headers, redirect chain, word count, SHA-256 content hash, source URL and retrieval timestamp.
+Returns a unique receipt ID, clean page text, citation-ready section offsets and hashes, title, description, canonical URL, published/modified dates when available, HTTP freshness headers, redirect chain, word count, SHA-256 content hash, source URL and retrieval timestamp.
 When active, FreshFact prepares and validates the complete deliverable before requesting x402 payment. Invalid or unusable sources are rejected without requesting payment.
 
 ## Discovery
@@ -643,7 +653,7 @@ ${baseUrl}/.well-known/x402-catalog.json
       purchasable: evidenceEnabled,
       statusMessage: evidenceEnabled ? productStatus : "Paid routes are paused for output quality review and return HTTP 503 before payment.",
       description:
-        "Public URL in, extracted source text and retrieval provenance out. Reported cache age is included when available.",
+        "Public URL in, audit-ready evidence receipt out: exact normalized text, citation offsets and hashes, source provenance, retrieval time and integrity data.",
       paymentProtocol: "x402",
       network: "eip155:8453",
       asset: "USDC",
@@ -661,6 +671,8 @@ ${baseUrl}/.well-known/x402-catalog.json
           },
           output: [
             "complete response prepared before payment",
+            "unique evidence receipt ID and schema version",
+            "citation offsets and per-section hashes",
             "final source URL",
             "HTTP status and content type",
             "title and description",
@@ -705,7 +717,7 @@ ${baseUrl}/.well-known/x402-catalog.json
         title: "FreshFact Evidence API",
         version: "1.0.0",
         description:
-          evidenceEnabled ? "FreshFact Evidence retrieves public page text and provenance for $0.01 USDC on Base. Output is delivered after payment settlement." : "Pay-per-request fresh web evidence over x402. Purchases are currently paused for output quality review; paid routes return HTTP 503 before payment.",
+          evidenceEnabled ? "FreshFact creates audit-ready public web evidence receipts with exact normalized text, citation offsets, provenance and integrity data for $0.01 USDC on Base. Output is delivered after payment settlement." : "Pay-per-request fresh web evidence over x402. Purchases are currently paused for output quality review; paid routes return HTTP 503 before payment.",
       },
       "x-service-status": evidenceEnabled ? "active" : "paused",
       servers: [{ url: baseUrl }],
@@ -723,7 +735,7 @@ ${baseUrl}/.well-known/x402-catalog.json
         "/api/evidence": {
           get: {
             summary:
-              "Retrieve public page text with provenance and reported cache age",
+              "Create an audit-ready evidence receipt for a public web page",
             description: "The complete deliverable is prepared and validated before x402 payment is requested. Invalid, unavailable, or unusable sources are rejected without payment.",
             security: [{ x402Payment: [] }],
             "x-payment-info": {
@@ -751,7 +763,7 @@ ${baseUrl}/.well-known/x402-catalog.json
             responses: {
               "200": {
                 description:
-                  "Clean evidence with provenance and integrity hash",
+                  "Evidence receipt with exact normalized text, citation offsets, provenance and integrity hashes",
               },
               "400": {
                 description:
@@ -1033,10 +1045,25 @@ ${baseUrl}/.well-known/x402-catalog.json
 
       const wordCount =
         text ? text.split(/\s+/).filter(Boolean).length : 0;
+      const freshness = sourceFreshness(response.headers);
+      const contentHash = crypto
+        .createHash("sha256")
+        .update(text, "utf8")
+        .digest("hex");
+      const receipt = createEvidenceReceipt({
+        requestedUrl,
+        finalUrl,
+        retrievedAt: freshness.retrievedAt,
+        contentHash,
+        text,
+        sections,
+        truncated,
+      });
 
       return {
         service: "FreshFact Evidence",
         version: "1.0.0",
+        receipt,
         source: {
           requestedUrl,
           finalUrl,
@@ -1044,13 +1071,10 @@ ${baseUrl}/.well-known/x402-catalog.json
           contentType,
           redirectChain,
         },
-        freshness: sourceFreshness(response.headers),
+        freshness,
         integrity: {
           algorithm: "sha256",
-          contentHash: crypto
-            .createHash("sha256")
-            .update(text, "utf8")
-            .digest("hex"),
+          contentHash,
         },
         page: {
           title,

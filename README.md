@@ -8,11 +8,11 @@ When Evidence is active, a valid source request without payment returns HTTP 402
 
 | Product | Request | Price | Coverage |
 | --- | --- | ---: | --- |
-| Evidence | `GET /api/evidence?url=<public-url>` | $0.01 | One public HTML/plain-text URL; extracted text and source metadata. |
+| Evidence Receipt | `GET /api/evidence?url=<public-url>` | $0.01 | Audit-ready record of the exact normalized text delivered from one public HTML/plain-text URL. |
 | Verify | `POST /api/verify` with `{"claim":"...","urls":["https://example.com"]}` | $0.03 | One to three supplied public URLs; passages sharing terms with the claim, retrieval time, content hash. No semantic truth verdict. |
 | Research | `POST /api/research` with `{"query":"..."}` | $0.05 | Search English Wikipedia and retrieve up to three matching pages. Wikipedia only; not a live-web search. |
 
-Evidence separates headings, paragraphs, and list items in `data.text`. `data.sections` gives each block's type and start/end character offsets into that exact text, so an agent can locate a passage without guessing where HTML elements ended. A page with no usable extracted text returns `EMPTY_SOURCE` instead of an empty successful result. The hash still covers `data.text`; it is not independent proof that the source page is authentic.
+Evidence returns a top-level `receipt` with a unique `receiptId`, schema version, subject URL, verification instructions, and citation entries. Each citation points to a stable start/end range in `data.text` and includes its own SHA-256 hash. `data.sections` remains available for direct parsing. A page with no usable extracted text returns `EMPTY_SOURCE` instead of an empty successful result. The hashes prove which normalized text FreshFact delivered; they do not prove that the source page is truthful or authentic. Store the response when later review is required because FreshFact does not archive source pages.
 
 Verify and Research return `termCoverage` for matching passages; that number measures overlap with query words, not confidence that the passage supports a claim. A passage may contradict the query. Their SHA-256 hashes cover the normalized text used to find passages. Each fetched page has a 2 MB transfer limit, a 50,000-character text limit, and a ten-second timeout per hop. Failed retrieval returns an error before payment is requested. Source retrieval can fail; the payment middleware never releases product output when settlement fails.
 
@@ -45,7 +45,7 @@ Potential distribution indexes:
 
 ### Listing description
 
-> FreshFact Evidence retrieves a public web page at request time and returns clean machine-readable evidence with source provenance, freshness headers, retrieval timestamp, metadata, redirect history, and a SHA-256 integrity hash. Pay $0.01 USDC on Base per request through x402.
+> FreshFact Evidence creates an audit-ready receipt for the exact web text delivered to an AI agent, including citation offsets, section hashes, source provenance, retrieval time, freshness signals, redirect history, and a SHA-256 content hash. Pay $0.01 USDC on Base per request through x402.
 
 ### Note on listing
 

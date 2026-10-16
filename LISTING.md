@@ -10,11 +10,11 @@ These replace the `description` and `serviceName` fields on each route in `Serve
 
 ### Evidence — `GET /api/evidence` — $0.01
 
-**serviceName:** `FreshFact Evidence`
+**serviceName:** `FreshFact Evidence Receipt`
 
 **description:**
 
-> Fetch a public web page at request time and return retrieved page data: extracted text, final URL, HTTP status, retrieval timestamp, redirect chain, and a SHA-256 hash of the returned text. Use when an agent needs a dated snapshot of extracted page text. Priced $0.01 per call in USDC on Base. FreshFact validates and prepares the result before requesting payment; the response carries no truth verdict about the page's contents.
+> Create an audit-ready evidence receipt for a public web page: exact normalized text, citation offsets and section hashes, source provenance, retrieval time, redirects, freshness signals, and a SHA-256 content hash. Use when an agent must preserve what it saw for later review. Priced $0.01 per call in USDC on Base. FreshFact validates and prepares the result before requesting payment; the receipt carries no truth verdict.
 
 ### Verify — `POST /api/verify` — $0.03
 
@@ -40,13 +40,13 @@ For x402.new, x402scan, and indexes that import Bazaar resources. Leads with the
 
 ### Short form (one line, for card layouts)
 
-> Web evidence with provenance. Fetch any public page and get its text, retrieval timestamp, redirect chain, and SHA-256 hash — a dated snapshot of extracted text, at $0.01 a call on Base.
+> Audit-ready web evidence receipts for AI agents. Preserve the exact normalized text delivered, citation offsets, section hashes, source provenance and retrieval time for $0.01 on Base.
 
 ### Long form (for a directory detail page)
 
-> **FreshFact Evidence** retrieves a public web page at request time and returns machine-readable extracted page data: the extracted text, the final URL after redirects, the HTTP status, the retrieval timestamp, the full redirect chain, and a SHA-256 hash over the returned text.
+> **FreshFact Evidence Receipt** records the exact normalized web text delivered to an AI agent. Each response includes a unique receipt ID, citation-ready section offsets and hashes, source and final URLs, HTTP status, retrieval time, redirect history, freshness signals, and a SHA-256 hash over the complete returned text.
 >
-> Store the returned text and metadata if an agent needs to review what it received later. The response is not independently authenticated or archived by FreshFact.
+> Use it when an agent-generated answer, recommendation, monitoring alert, or business decision may need to be reviewed later. Store the response: it is not independently authenticated or archived by FreshFact, and it does not claim the source is true.
 >
 > - **Price:** $0.01 per call in USDC on Base
 > - **No account, no API key** — x402 payment on the request
@@ -101,6 +101,6 @@ PayAPI's form probes the exact paid URL before it creates a listing. Submit a co
 - **Suggested category:** web/data extraction or data intelligence, whichever label the form currently offers
 - **Description:** Use the long-form Evidence description in section 2
 - **Expected unpaid check:** HTTP 402 with x402 v2, network `eip155:8453`, amount `10000`, asset Base USDC, and `extra.name` equal to `USD Coin`
-- **Expected paid result:** HTTP 200 JSON containing extracted text, source/final URL, HTTP status, retrieval timestamp, redirect history, structured sections, and a SHA-256 content hash
+- **Expected paid result:** HTTP 200 JSON containing a unique receipt ID, exact normalized text, citation offsets and per-section hashes, source/final URL, HTTP status, retrieval timestamp, redirect history, freshness signals, and a SHA-256 content hash
 
 The owner must enter and confirm the provider name, contact email, and Base payout wallet. The wallet must exactly match the live challenge's `payTo`. Never paste a seed phrase or private key into a listing form.
