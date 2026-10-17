@@ -1,6 +1,18 @@
 # FreshFact project status
 
-Updated 2026-10-16. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-17. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 17 deployment and distribution checkpoint
+
+Commit `0f6ef1c62f6c7b95b1d209b19a35579fadb686e8` deployed successfully on October 16. On October 17, production health identified that exact release and reported Evidence, Verify, and Research active. The landing page, OpenAPI, `llms.txt`, x402 catalog, and a valid unpaid Evidence request were verified live. No error-level logs, HTTP 500/502/503 logs, presented payment, or successful paid delivery was found after this deployment.
+
+Evidence now creates a deterministic audit receipt containing a receipt ID and version, whole-text hash, citation offsets, and per-section hashes. The receipt records what FreshFact delivered; it is not signed, archived, or proof that the source is true. Do not widen that claim.
+
+Distribution is still the controlling blocker. Exact live searches on October 17 returned zero FreshFact results in x402.new (14,201 services) and PayAPI Market (370 live APIs, 359 verified). FreshFact therefore has no verified marketplace visibility to turn availability into demand. No independent paid call, buyer, repeat buyer, or outside revenue was verified; owner tests remain excluded.
+
+Market evidence does not justify more feature development. x402.new shows commodity web-read/content products at roughly $0.002 per call with thousands of reported calls, while a broader official-source-evidence competitor was measured at only one buyer and one $0.01 settlement over 30 days. Preserve FreshFact's receipt differentiation, but use a strict distribution test before investing further.
+
+Highest-value objective: submit the active $0.01 Evidence Receipt endpoint to free x402 directories, beginning with PayAPI Market and x402.new, then measure independent paid calls and repeat buyers. Do not build more products until distribution produces demand. If listing produces no independent purchase after a defined test window, recommend pivoting away from generic web evidence.
 
 ## October 16 revenue-product checkpoint
 
