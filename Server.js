@@ -6,7 +6,7 @@ const net = require("net");
 const { Agent } = require("undici");
 const { validateSources, validateClaim, validateQuery, evidenceFromPage, searchWikipedia } = require("./products");
 const { extractReadableText } = require("./readableText");
-const { PreflightError, createPreflightGate } = require("./preflightGate");
+const { PreflightError, createPreflightGate, isUnpaidEmptyPost } = require("./preflightGate");
 const { isPrivateDeliveryTest } = require("./privateDeliveryTest");
 const { sendDelivery } = require("./deliveryJson");
 const { evidenceIsEnabled, isPublicEvidenceRequest } = require("./evidenceRelease");
@@ -532,6 +532,9 @@ async function start() {
 
   app.post(["/api/verify", "/api/research"], async (req, res, next) => {
     try {
+      // Bazaar validates POST discovery by probing without a request body.
+      // The unpaid probe must reach x402; actual paid retries still validate.
+      if (isUnpaidEmptyPost(req)) return next();
       if (req.path === "/api/verify") {
         req.validatedClaim = validateClaim(req.body?.claim);
         req.validatedUrls = validateSources(req.body?.urls);

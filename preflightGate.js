@@ -30,6 +30,21 @@ function requestKey(req) {
   return crypto.createHash("sha256").update(input).digest("hex");
 }
 
+function isUnpaidEmptyPost(req) {
+  if (req.method !== "POST") return false;
+
+  const payment = typeof req.get === "function"
+    ? req.get("PAYMENT-SIGNATURE") || req.get("X-PAYMENT")
+    : req.headers?.["payment-signature"] || req.headers?.["x-payment"];
+  if (payment) return false;
+
+  return req.body == null || (
+    typeof req.body === "object" &&
+    !Array.isArray(req.body) &&
+    Object.keys(req.body).length === 0
+  );
+}
+
 function createPreflightGate({
   paidPaths,
   prepare,
@@ -52,6 +67,10 @@ function createPreflightGate({
 
   return async function preflightGate(req, res, next) {
     if (!paidPaths.has(req.path)) return next();
+    // Bazaar's read-only validator probes POST resources without a body. Let
+    // that unpaid probe reach x402 so it receives the discovery challenge.
+    // A paid retry never bypasses preparation, even if its body is empty.
+    if (isUnpaidEmptyPost(req)) return next();
 
     const key = requestKey(req);
     const timestamp = now();
@@ -95,4 +114,4 @@ function createPreflightGate({
   };
 }
 
-module.exports = { PreflightError, createPreflightGate, requestKey };
+module.exports = { PreflightError, createPreflightGate, requestKey, isUnpaidEmptyPost };

@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { PreflightError, createPreflightGate, requestKey } = require("./preflightGate");
+const { PreflightError, createPreflightGate, requestKey, isUnpaidEmptyPost } = require("./preflightGate");
 
 function responseRecorder() {
   return {
@@ -19,6 +19,41 @@ test("request keys are stable across object key order and ignore payment headers
   const first = request({ query: { maxChars: "30000", url: "https://example.com" }, headers: { "payment-signature": "one" } });
   const second = request({ query: { url: "https://example.com", maxChars: "30000" }, headers: { "payment-signature": "two" } });
   assert.equal(requestKey(first), requestKey(second));
+});
+
+test("unpaid empty POST probes bypass preparation for Bazaar discovery", async () => {
+  const probe = request({ method: "POST", path: "/api/verify", query: {}, body: undefined });
+  assert.equal(isUnpaidEmptyPost(probe), true);
+
+  let preparations = 0;
+  const gate = createPreflightGate({
+    paidPaths: new Set(["/api/verify"]),
+    prepare: async () => { preparations += 1; },
+  });
+  let continued = false;
+  await gate(probe, responseRecorder(), () => { continued = true; });
+  assert.equal(continued, true);
+  assert.equal(preparations, 0);
+});
+
+test("empty paid POST retries never bypass preparation", async () => {
+  const retry = request({
+    method: "POST",
+    path: "/api/verify",
+    query: {},
+    body: {},
+    headers: { "payment-signature": "proof" },
+  });
+  assert.equal(isUnpaidEmptyPost(retry), false);
+
+  let preparations = 0;
+  const gate = createPreflightGate({
+    paidPaths: new Set(["/api/verify"]),
+    prepare: async () => { preparations += 1; return { ok: true }; },
+  });
+  await gate(retry, responseRecorder(), () => {});
+  assert.equal(preparations, 1);
+  assert.deepEqual(retry.preparedResponse, { ok: true });
 });
 
 test("failed preparation stops before payment middleware", async () => {
