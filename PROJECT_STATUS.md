@@ -1,6 +1,18 @@
 # FreshFact project status
 
-Updated 2026-10-17. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-18. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 18 Bazaar validation repair
+
+Coinbase's live Bazaar `validate_endpoint` tool exposed a concrete discovery defect: Evidence passed, but bodyless POST probes for Verify and Research returned HTTP 400 before x402 could issue a discovery challenge. Commit `01598effb43926bfe096be65740b9a714f731233` now lets only unpaid empty POST probes reach x402; a retry carrying any payment header still validates its body before settlement. The complete test suite passed (54/54), including regression tests proving that a paid empty retry cannot bypass preparation.
+
+Render deployed that exact commit successfully. Production `/health` identifies release `01598effb43926bfe096be65740b9a714f731233` with all products active. Coinbase's live validator now reports all three routes reachable, x402 v2, Base USDC, Bazaar metadata present, and `simulate.outcome: accepted`. Evidence remains $0.01, Verify $0.03, and Research $0.05. Invalid paid POST input still returns 400 before settlement.
+
+The validator also reports all three resources `indexed: false` and `active: false`, and an exact public Bazaar MCP search returns no FreshFact resource. Coinbase's current seller guide says a completed paid call triggers indexing after metadata is valid. No payment was made in this repair, and Render logs showed no presented payment or successful paid delivery since the previous checkpoint. Therefore independent paid calls, buyers, repeat buyers, and outside revenue remain zero; all owner tests remain excluded.
+
+PayAPI Market has grown to 372 live APIs and 361 settlement-verified listings, but exact current searches still return no FreshFact listing. Manual PayAPI submission remains blocked on owner identity/contact confirmation; do not invent or transmit those details.
+
+Highest-value objective: complete one real $0.01 Evidence call against the current accepted Bazaar challenge, then confirm that Coinbase marks the resource indexed and that it appears in Bazaar search. Treat it only as a discovery-seeding owner test, never commercial revenue. If indexing succeeds, start the defined demand window; if it does not, investigate the settlement/facilitator path rather than adding more product features.
 
 ## October 17 deployment and distribution checkpoint
 
