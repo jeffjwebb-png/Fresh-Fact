@@ -1,6 +1,19 @@
 # FreshFact project status
 
-Updated 2026-10-18. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-22. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 22 PayAPI submission checkpoint
+
+PayAPI Market confirmed receipt of the FreshFact submission on October 21 at 11:46 AM Pacific. The submission is not live yet. PayAPI says its next step is to pay one call from its wallet to the submitted route; if delivery fails and the server returns another 402, the listing will remain pending and PayAPI will email the reason. No action is currently requested from the owner.
+
+Production release `2ce7f45374a87a8b0383dcb5c2f08f152e6c761c` remains live. The landing page, health, OpenAPI, `llms.txt`, and x402 catalog are available with Evidence, Verify, and Research active. A clean checkout of the GitHub head passes all 54 tests and `npm audit --omit=dev` reports zero known vulnerabilities.
+
+Render logs through October 22 at 8:47 AM Pacific show no error-level entries, no HTTP 500/502/503 responses, no request with `paymentPresented:true`, and no `deliverySucceeded:true` event. The Verify requests observed after submission were unpaid 402 probes. FreshFact is not yet returned by exact searches of PayAPI Market or x402.new.
+
+Commercial evidence therefore remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 verified outside revenue. Owner tests remain excluded.
+
+Highest-value objective: let PayAPI complete its independent $0.03 Verify settlement-and-delivery test, then verify the resulting Render delivery event, on-chain settlement, review email, and public listing before calling it a sale or distribution success.
+
 
 ## October 18 Bazaar validation repair
 
