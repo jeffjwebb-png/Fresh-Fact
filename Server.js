@@ -1,4 +1,5 @@
 const { normalizePlaygroundPayment } = require("./paymentClientCompatibility");
+const { sendCheckoutPage } = require("./checkoutPage");
 const express = require("express");
 const crypto = require("crypto");
 const dns = require("dns").promises;
@@ -574,7 +575,7 @@ async function start() {
   <p>Audit-ready web evidence for AI agents.</p>
   <p>Give FreshFact a public URL and receive the exact normalized text an agent saw, citation-ready section offsets and hashes, source provenance, retrieval time, freshness signals and a unique receipt ID.</p>
   <p class="price">${evidenceEnabled ? "$0.01 USDC per request on Base." : "Purchases paused during quality review."}</p>
-  ${evidenceEnabled ? '<p><a href="/api/evidence?url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FKilowatt-hour">Try Evidence with a kilowatt-hour article</a></p>' : ""}
+  ${evidenceEnabled ? '<p><a href="/checkout">Buy an Evidence Receipt with a Base wallet</a></p>' : ""}
 
   <h2>Paid endpoint</h2>
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
@@ -602,6 +603,10 @@ async function start() {
   <p>${evidenceEnabled ? (productsEnabled ? "Product output is delivered after successful payment settlement. Verify locates related passages, not truth verdicts. Research searches English Wikipedia only." : "Evidence output is delivered after successful payment settlement. Verify and Research remain unavailable for purchase.") : "Paid routes and machine discovery are unavailable until product quality has been verified."}</p>
 </body>
 </html>`);
+  });
+
+  app.get("/checkout", (req, res) => {
+    return sendCheckoutPage(res, { payTo, evidenceEnabled });
   });
 
   app.get("/health", (req, res) => {
