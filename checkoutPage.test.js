@@ -1,7 +1,17 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const vm = require("node:vm");
-const { buildCheckoutPage, sendCheckoutPage, quoteMatchesExpected, BASE_CHAIN_ID, BASE_USDC, EVIDENCE_AMOUNT } = require("./checkoutPage");
+const {
+  buildCheckoutPage,
+  sendCheckoutPage,
+  quoteMatchesExpected,
+  BASE_CHAIN_ID,
+  BASE_USDC,
+  EVIDENCE_AMOUNT,
+  CHECKOUT_URL,
+  COINBASE_WALLET_URL,
+  METAMASK_WALLET_URL,
+} = require("./checkoutPage");
 
 const payTo = "0xdc379f04221295e2394FA6B6118b0913a73C5197";
 
@@ -22,6 +32,18 @@ test("checkout is dependency-free, Base-only, and pins the exact Evidence price 
 test("checkout rejects unsafe server interpolation values", () => {
   assert.throws(() => buildCheckoutPage({ payTo: "<script>alert(1)</script>", nonce: "test-nonce-123456" }), /recipient/);
   assert.throws(() => buildCheckoutPage({ payTo, nonce: "short" }), /nonce/);
+});
+
+test("ordinary mobile browsers can hand off the checkout to supported wallet apps", () => {
+  const html = buildCheckoutPage({ payTo, nonce: "test-nonce-123456" });
+  assert.match(html, /Open in Coinbase Wallet/);
+  assert.match(html, /Open in MetaMask/);
+  assert.ok(COINBASE_WALLET_URL.startsWith("https://go.cb-w.com/dapp?cb_url="));
+  assert.equal(new URL(COINBASE_WALLET_URL).searchParams.get("cb_url"), CHECKOUT_URL);
+  assert.equal(METAMASK_WALLET_URL, "https://link.metamask.io/dapp/fresh-fact.onrender.com/checkout");
+  assert.match(html, new RegExp(COINBASE_WALLET_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(html, new RegExp(METAMASK_WALLET_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(html, /No installed wallet was detected\. Choose Coinbase Wallet or MetaMask below/);
 });
 
 test("generated checkout browser script is valid JavaScript", () => {

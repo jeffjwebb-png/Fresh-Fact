@@ -4,6 +4,9 @@ const BASE_CHAIN_ID = 8453;
 const BASE_CHAIN_HEX = "0x2105";
 const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const EVIDENCE_AMOUNT = "10000";
+const CHECKOUT_URL = "https://fresh-fact.onrender.com/checkout";
+const COINBASE_WALLET_URL = `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(CHECKOUT_URL)}`;
+const METAMASK_WALLET_URL = `https://link.metamask.io/dapp/${CHECKOUT_URL.replace(/^https?:\/\//, "")}`;
 
 function quoteMatchesExpected(option, expected) {
   return option?.scheme === "exact" &&
@@ -42,7 +45,7 @@ function buildCheckoutPage({ payTo, nonce }) {
     main{border:1px solid #8886;border-radius:16px;padding:24px}
     label{display:block;font-weight:650;margin:18px 0 6px}
     input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #8888;border-radius:8px;font:inherit}
-    button{margin:14px 8px 0 0;padding:12px 16px;border:0;border-radius:9px;font:inherit;font-weight:700;cursor:pointer}
+    button,.wallet-link{display:inline-block;margin:14px 8px 0 0;padding:12px 16px;border:0;border-radius:9px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
     button:disabled{cursor:not-allowed;opacity:.5}
     .primary{background:#155eef;color:#fff}.secondary{background:#7772}
     .facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:18px 0}
@@ -63,8 +66,14 @@ function buildCheckoutPage({ payTo, nonce }) {
   </dl>
   <label for="source">Public source URL</label>
   <input id="source" type="url" inputmode="url" value="https://example.com" autocomplete="off" spellcheck="false">
-  <button id="connect" class="secondary" type="button">Connect wallet</button>
+  <button id="connect" class="secondary" type="button">Connect installed wallet</button>
   <button id="pay" class="primary" type="button" disabled>Pay $0.01 and retrieve</button>
+  <section id="wallet-options" aria-labelledby="wallet-options-title">
+    <h2 id="wallet-options-title">Opening this in Safari or Chrome?</h2>
+    <p>Choose your wallet. It will open this same secure checkout inside the wallet so you can approve the one-cent payment.</p>
+    <a id="coinbase-wallet" class="wallet-link primary" href="${COINBASE_WALLET_URL}">Open in Coinbase Wallet</a>
+    <a id="metamask-wallet" class="wallet-link secondary" href="${METAMASK_WALLET_URL}">Open in MetaMask</a>
+  </section>
   <p id="status" role="status" aria-live="polite">Preparing a live payment quote…</p>
   <pre id="result"></pre>
   <p class="fine">Your wallet will ask you to sign a USDC authorization for exactly 10,000 atomic units ($0.01), payable only to FreshFact. No seed phrase or private key is requested.</p>
@@ -141,7 +150,7 @@ ${quoteMatchesExpected.toString()}
 
   async function connectWallet() {
     if (!window.ethereum?.request) {
-      throw new Error("Open this checkout in a wallet browser that supports Base, such as Coinbase Wallet.");
+      throw new Error("No installed wallet was detected. Choose Coinbase Wallet or MetaMask below to continue.");
     }
     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
     if (!Array.isArray(accounts) || !/^0x[0-9a-f]{40}$/i.test(accounts[0] || "")) {
@@ -268,5 +277,15 @@ function sendCheckoutPage(res, { payTo, evidenceEnabled, nonce = crypto.randomBy
   return res.type("html").send(buildCheckoutPage({ payTo, nonce }));
 }
 
-module.exports = { buildCheckoutPage, sendCheckoutPage, quoteMatchesExpected, BASE_CHAIN_ID, BASE_USDC, EVIDENCE_AMOUNT };
+module.exports = {
+  buildCheckoutPage,
+  sendCheckoutPage,
+  quoteMatchesExpected,
+  BASE_CHAIN_ID,
+  BASE_USDC,
+  EVIDENCE_AMOUNT,
+  CHECKOUT_URL,
+  COINBASE_WALLET_URL,
+  METAMASK_WALLET_URL,
+};
 
