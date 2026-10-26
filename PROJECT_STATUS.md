@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-10-22. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-26. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 26 checkout delivery checkpoint
+
+An additional owner-controlled $0.01 Evidence checkout completed at 2026-10-26T08:22:09.527Z. Production recorded HTTP 200, `paymentPresented:true`, and `deliverySucceeded:true` for payer fingerprint `fbc8fa9c85e032d4`. This proves the browser checkout can settle Base USDC and deliver the Evidence response. It is an owner test and is excluded from independent buyers, calls, repeat buyers, and revenue.
+
+The test also exposed a usability defect: checkout prefilled `https://example.com`, and the delivered product was easy to miss in a raw JSON box. Later attempts against an unavailable source returned 502 during preflight with `paymentPresented:false`; no payment was requested for those failures. Commit `3a58ae17f45f8082556e9cf2b1c15294f43039c6` removes the placeholder purchase, requires a buyer-supplied public URL or an explicit Wikipedia test article, shows the server's source-specific no-charge error, and displays a prominent delivered-receipt summary with source, title, word count, receipt ID, SHA-256 hash, copy, and JSON download controls.
+
+Render deployment `dep-dbfmplc9v7es73dmt00g` is live. Production health identifies release `3a58ae17f45f8082556e9cf2b1c15294f43039c6`; landing, checkout, OpenAPI, `llms.txt`, catalog, and health return 200. Valid Evidence, Verify, and Research inputs return their x402 Base-USDC challenges. All 64 tests pass.
+
+FreshFact still has no exact listing in x402.new, and the pending PayAPI submission has not produced a verified listing or independent paid call. Commercial evidence remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 outside revenue. Do not treat owner checkout tests as sales.
+
+Dependency audit caveat: `npm audit` currently reports eight high-severity package paths cascading from Zod advisory `GHSA-mrhx-c7xc-m3w5`. The installed current x402/CDP packages depend on Zod 3.x, while the available advisory fix is Zod 4.6.6 or newer. Do not force an unsupported major override; retest when the upstream payment packages add compatible Zod 4 support.
+
+Highest-value objective: obtain and observe one independent marketplace settlement and delivery. Do not request another owner Evidence payment merely to prove the already-recorded payment path. If PayAPI does not complete its canary/listing, pursue another free agent-API directory or a direct developer integration before building more features.
 
 ## October 22 PayAPI submission checkpoint
 
