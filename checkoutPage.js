@@ -51,7 +51,9 @@ function buildCheckoutPage({ payTo, nonce }) {
     .facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:18px 0}
     .facts dt{font-weight:700}.facts dd{margin:0;overflow-wrap:anywhere}
     #status{min-height:1.5em;font-weight:650}#status.error{color:#c62828}#status.ok{color:#16813b}
-    pre{display:none;white-space:pre-wrap;overflow-wrap:anywhere;background:#7771;border-radius:8px;padding:12px;max-height:320px;overflow:auto}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#7771;border-radius:8px;padding:12px;max-height:320px;overflow:auto}
+    #delivery{margin-top:24px;padding:18px;border:2px solid #16813b;border-radius:12px}
+    #delivery[hidden]{display:none}.receipt-actions{margin-top:4px}
     .fine{font-size:.9rem;color:#777}
   </style>
 </head>
@@ -65,7 +67,8 @@ function buildCheckoutPage({ payTo, nonce }) {
     <dt>Product</dt><dd>Evidence Receipt</dd>
   </dl>
   <label for="source">Public source URL</label>
-  <input id="source" type="url" inputmode="url" value="https://example.com" autocomplete="off" spellcheck="false">
+  <input id="source" type="url" inputmode="url" placeholder="https://public-webpage.example/article" autocomplete="off" spellcheck="false" required>
+  <button id="test-source" class="secondary" type="button">Use a public test article</button>
   <button id="connect" class="secondary" type="button">Connect installed wallet</button>
   <button id="pay" class="primary" type="button" disabled>Pay $0.01 and retrieve</button>
   <section id="wallet-options" aria-labelledby="wallet-options-title">
@@ -74,8 +77,23 @@ function buildCheckoutPage({ payTo, nonce }) {
     <a id="coinbase-wallet" class="wallet-link primary" href="${COINBASE_WALLET_URL}">Open in Coinbase Wallet</a>
     <a id="metamask-wallet" class="wallet-link secondary" href="${METAMASK_WALLET_URL}">Open in MetaMask</a>
   </section>
-  <p id="status" role="status" aria-live="polite">Preparing a live payment quote…</p>
-  <pre id="result"></pre>
+  <p id="status" role="status" aria-live="polite">Enter the public webpage you want captured. FreshFact checks it before asking for payment.</p>
+  <section id="delivery" tabindex="-1" hidden>
+    <h2>Your Evidence Receipt is ready</h2>
+    <p>The payment settled and the product was delivered. Save this receipt if you may need to verify the source later.</p>
+    <dl class="facts">
+      <dt>Source</dt><dd id="delivered-source"></dd>
+      <dt>Page</dt><dd id="delivered-title"></dd>
+      <dt>Words</dt><dd id="delivered-words"></dd>
+      <dt>Receipt ID</dt><dd id="delivered-id"></dd>
+      <dt>SHA-256</dt><dd id="delivered-hash"></dd>
+    </dl>
+    <div class="receipt-actions">
+      <button id="download" class="primary" type="button">Download receipt JSON</button>
+      <button id="copy" class="secondary" type="button">Copy receipt JSON</button>
+    </div>
+    <details><summary>View complete delivered JSON</summary><pre id="result"></pre></details>
+  </section>
   <p class="fine">Your wallet will ask you to sign a USDC authorization for exactly 10,000 atomic units ($0.01), payable only to FreshFact. No seed phrase or private key is requested.</p>
 </main>
 <script nonce="${nonce}">
@@ -86,10 +104,15 @@ ${quoteMatchesExpected.toString()}
   const source = document.getElementById("source");
   const connectButton = document.getElementById("connect");
   const payButton = document.getElementById("pay");
+  const testSourceButton = document.getElementById("test-source");
   const status = document.getElementById("status");
+  const delivery = document.getElementById("delivery");
   const result = document.getElementById("result");
+  const downloadButton = document.getElementById("download");
+  const copyButton = document.getElementById("copy");
   let account = null;
   let authorizationSigned = false;
+  let deliveredJson = "";
 
   function setStatus(message, kind = "") {
     status.textContent = message;
@@ -132,7 +155,10 @@ ${quoteMatchesExpected.toString()}
 
   async function getQuote(endpoint) {
     const response = await fetch(endpoint, { headers: { Accept: "application/json" }, cache: "no-store" });
-    if (response.status !== 402) throw new Error("Expected a payment quote but received HTTP " + response.status + ".");
+    if (response.status !== 402) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.message || "FreshFact could not prepare that source (HTTP " + response.status + "). No payment was requested.");
+    }
     const header = response.headers.get("PAYMENT-REQUIRED");
     if (!header) throw new Error("The payment quote header is missing.");
     const paymentRequired = decodeBase64Json(header);
@@ -230,8 +256,16 @@ ${quoteMatchesExpected.toString()}
     const settlement = paid.headers.get("PAYMENT-RESPONSE");
     if (!settlement) throw new Error("FreshFact delivered a response without a settlement receipt.");
     setStatus("Payment settled and Evidence Receipt delivered.", "ok");
-    result.style.display = "block";
-    result.textContent = JSON.stringify({ settlementReceipt: settlement, evidence: body }, null, 2);
+    const delivered = { settlementReceipt: settlement, evidence: body };
+    deliveredJson = JSON.stringify(delivered, null, 2);
+    result.textContent = deliveredJson;
+    document.getElementById("delivered-source").textContent = body.source?.finalUrl || body.source?.requestedUrl || source.value.trim();
+    document.getElementById("delivered-title").textContent = body.page?.title || "Untitled source";
+    document.getElementById("delivered-words").textContent = String(body.data?.wordCount ?? "Not reported");
+    document.getElementById("delivered-id").textContent = body.receipt?.receiptId || "Included in JSON";
+    document.getElementById("delivered-hash").textContent = body.integrity?.contentHash || body.receipt?.content?.hash || "Included in JSON";
+    delivery.hidden = false;
+    delivery.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
 
   connectButton.addEventListener("click", async () => {
@@ -241,7 +275,7 @@ ${quoteMatchesExpected.toString()}
   });
   payButton.addEventListener("click", async () => {
     payButton.disabled = true;
-    result.style.display = "none";
+    delivery.hidden = true;
     try { await pay(); }
     catch (error) {
       if (authorizationSigned) {
@@ -252,11 +286,29 @@ ${quoteMatchesExpected.toString()}
       payButton.disabled = false;
     }
   });
-
-  getQuote(endpointFor(source.value)).then(
-    () => setStatus("Live one-cent quote verified. Connect your wallet when ready.", "ok"),
-    error => setStatus(error?.message || "Could not prepare the live quote.", "error"),
-  );
+  source.addEventListener("input", () => {
+    delivery.hidden = true;
+    setStatus("Source changed. FreshFact will validate it before asking for payment.");
+  });
+  testSourceButton.addEventListener("click", () => {
+    source.value = "https://en.wikipedia.org/wiki/HTTP_402";
+    delivery.hidden = true;
+    setStatus("Public test article selected. Connect your wallet when ready.", "ok");
+  });
+  downloadButton.addEventListener("click", () => {
+    if (!deliveredJson) return;
+    const url = URL.createObjectURL(new Blob([deliveredJson], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "freshfact-evidence-receipt.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+  copyButton.addEventListener("click", async () => {
+    if (!deliveredJson || !navigator.clipboard?.writeText) return setStatus("Copy is unavailable in this browser. Use Download receipt JSON instead.", "error");
+    await navigator.clipboard.writeText(deliveredJson);
+    setStatus("Evidence Receipt copied to the clipboard.", "ok");
+  });
 })();
 </script>
 </body>

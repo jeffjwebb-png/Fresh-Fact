@@ -44,6 +44,10 @@ test("ordinary mobile browsers can hand off the checkout to supported wallet app
   assert.match(html, new RegExp(COINBASE_WALLET_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(html, new RegExp(METAMASK_WALLET_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(html, /No installed wallet was detected\. Choose Coinbase Wallet or MetaMask below/);
+  assert.doesNotMatch(html, /value="https:\/\/example\.com"/);
+  assert.match(html, /Use a public test article/);
+  assert.match(html, /Download receipt JSON/);
+  assert.match(html, /Your Evidence Receipt is ready/);
 });
 
 test("generated checkout browser script is valid JavaScript", () => {
@@ -148,13 +152,15 @@ test("browser flow signs the pinned one-cent terms and sends the x402 retry", as
     extensions: { bazaar: { info: { input: { type: "http" } } } },
   };
   const quoteHeader = Buffer.from(JSON.stringify(quote), "utf8").toString("base64");
-  const elements = Object.fromEntries(["source", "connect", "pay", "status", "result"].map(id => [id, {
+  const elementIds = ["source", "connect", "pay", "test-source", "status", "delivery", "result", "download", "copy", "delivered-source", "delivered-title", "delivered-words", "delivered-id", "delivered-hash"];
+  const elements = Object.fromEntries(elementIds.map(id => [id, {
     id,
     value: id === "source" ? "https://example.com" : "",
     textContent: "",
     className: "",
     disabled: id === "pay",
     style: {},
+    hidden: id === "delivery",
     listeners: {},
     addEventListener(name, handler) { this.listeners[name] = handler; },
   }]));
@@ -162,7 +168,7 @@ test("browser flow signs the pinned one-cent terms and sends the x402 retry", as
   const rpcCalls = [];
   const fetch = async (url, options = {}) => {
     fetchCalls.push({ url, options });
-    if (fetchCalls.length < 3) {
+    if (fetchCalls.length < 2) {
       return { status: 402, ok: false, headers: { get: name => name.toLowerCase() === "payment-required" ? quoteHeader : null } };
     }
     return {
@@ -183,7 +189,7 @@ test("browser flow signs the pinned one-cent terms and sends the x402 retry", as
   };
   const context = vm.createContext({
     window: { ethereum },
-    document: { getElementById: id => elements[id] },
+    document: { getElementById: id => elements[id], createElement: () => ({ click() {} }) },
     fetch,
     crypto: { getRandomValues: array => { array.fill(7); return array; } },
     URL,
@@ -199,6 +205,8 @@ test("browser flow signs the pinned one-cent terms and sends the x402 retry", as
     Error,
     atob,
     btoa,
+    navigator: {},
+    Blob,
   });
   vm.runInContext(script, context);
   await new Promise(resolve => setImmediate(resolve));
@@ -213,8 +221,8 @@ test("browser flow signs the pinned one-cent terms and sends the x402 retry", as
   assert.equal(typedData.message.to.toLowerCase(), payTo.toLowerCase());
   assert.equal(typedData.message.value, "10000");
 
-  assert.equal(fetchCalls.length, 3);
-  const header = fetchCalls[2].options.headers["PAYMENT-SIGNATURE"];
+  assert.equal(fetchCalls.length, 2);
+  const header = fetchCalls[1].options.headers["PAYMENT-SIGNATURE"];
   const payload = JSON.parse(Buffer.from(header, "base64").toString("utf8"));
   assert.equal(payload.x402Version, 2);
   assert.equal(payload.accepted.amount, "10000");
@@ -223,6 +231,8 @@ test("browser flow signs the pinned one-cent terms and sends the x402 retry", as
   assert.equal(payload.extensions.bazaar.info.input.type, "http");
   assert.equal(elements.status.textContent, "Payment settled and Evidence Receipt delivered.");
   assert.match(elements.result.textContent, /settlement-receipt/);
+  assert.equal(elements.delivery.hidden, false);
+  assert.equal(elements["delivered-words"].textContent, "Not reported");
 });
 
 test("an ambiguous failure after signing never enables a second authorization", async () => {
@@ -235,19 +245,21 @@ test("an ambiguous failure after signing never enables a second authorization", 
     extensions: {},
   };
   const quoteHeader = Buffer.from(JSON.stringify(quote), "utf8").toString("base64");
-  const elements = Object.fromEntries(["source", "connect", "pay", "status", "result"].map(id => [id, {
+  const elementIds = ["source", "connect", "pay", "test-source", "status", "delivery", "result", "download", "copy", "delivered-source", "delivered-title", "delivered-words", "delivered-id", "delivered-hash"];
+  const elements = Object.fromEntries(elementIds.map(id => [id, {
     value: id === "source" ? "https://example.com" : "",
     textContent: "",
     className: "",
     disabled: id === "pay",
     style: {},
+    hidden: id === "delivery",
     listeners: {},
     addEventListener(name, handler) { this.listeners[name] = handler; },
   }]));
   let fetchCount = 0;
   const fetch = async () => {
     fetchCount += 1;
-    if (fetchCount < 3) return { status: 402, ok: false, headers: { get: name => name.toLowerCase() === "payment-required" ? quoteHeader : null } };
+    if (fetchCount < 2) return { status: 402, ok: false, headers: { get: name => name.toLowerCase() === "payment-required" ? quoteHeader : null } };
     throw new Error("response lost after request was sent");
   };
   const ethereum = { request: async request => {
@@ -258,7 +270,7 @@ test("an ambiguous failure after signing never enables a second authorization", 
   } };
   vm.runInContext(script, vm.createContext({
     window: { ethereum },
-    document: { getElementById: id => elements[id] },
+    document: { getElementById: id => elements[id], createElement: () => ({ click() {} }) },
     fetch,
     crypto: { getRandomValues: array => { array.fill(7); return array; } },
     URL,
@@ -274,12 +286,14 @@ test("an ambiguous failure after signing never enables a second authorization", 
     Error,
     atob,
     btoa,
+    navigator: {},
+    Blob,
   }));
   await new Promise(resolve => setImmediate(resolve));
   await elements.connect.listeners.click();
   await elements.pay.listeners.click();
 
-  assert.equal(fetchCount, 3);
+  assert.equal(fetchCount, 2);
   assert.equal(elements.pay.disabled, true);
   assert.match(elements.status.textContent, /Do not pay again/);
 });
