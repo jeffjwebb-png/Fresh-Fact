@@ -1,6 +1,22 @@
 # FreshFact project status
 
-Updated 2026-10-26. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-27. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 27 discovery and operations checkpoint
+
+Production release `3a58ae17f45f8082556e9cf2b1c15294f43039c6` remains live. From its deployment through 8:37 AM Pacific on October 27, Render recorded no error-level entries, no HTTP 500/502/503/504 responses, no `paymentPresented:true` request, and no `deliverySucceeded:true` event. Memory peaked at approximately 128.6 MB of the 536.9 MB limit (24%). A fresh checkout of GitHub passes all 64 tests.
+
+The live landing page, checkout, health, OpenAPI, `llms.txt`, and x402 catalog return 200. Correctly formed Evidence, Verify, and Research requests return x402 v2 challenges with Base mainnet USDC, prices of $0.01/$0.03/$0.05, and Bazaar declarations in the `PAYMENT-REQUIRED` header. Coinbase's public validator gives the concrete Evidence URL `valid:true`, `simulation.outcome:"accepted"`, and 25/25 passing preflight checks, but `index:null`.
+
+Exact current searches still return no FreshFact listing in x402.new or PayAPI Market. PayAPI currently reports 1,042 live listings, 1,031 verified listings, and 6,311 endpoints, so absence from that catalogue remains a material distribution blocker rather than a lack of marketplace activity. Multiple open Coinbase/x402 issue reports describe valid, successfully settled resources remaining unindexed; FreshFact's accepted validator result plus null index is consistent with that external failure mode. Do not spend another owner payment merely to retry indexing.
+
+Current x402.new pricing evidence does not justify changing FreshFact's $0.01 price before it is listed: the highest-usage matching WEB Extract result observed was $0.003 with 352 calls and 10 payers in 30 days; another was $0.02 with 118 calls and 21 payers. FreshFact's receipt/provenance differentiation sits inside that range, but no independent purchase yet demonstrates willingness to pay for it.
+
+`npm audit --omit=dev` still reports eight high-severity dependency paths, all cascading from Zod advisory `GHSA-mrhx-c7xc-m3w5`. Current `@x402/core` 2.28.0 requires Zod 3.x, and current `@coinbase/cdp-sdk` 1.60.0 also remains on Zod 3.x; npm's suggested fixes are incompatible major downgrades. The application caps JSON request bodies at 16 KB. Preserve that mitigation and do not force an unsupported Zod override.
+
+Commercial evidence remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 outside revenue. Owner tests remain excluded.
+
+Highest-value objective: resolve distribution rather than add features—obtain a real public listing or one direct independent developer integration, then measure paid calls and repeat use. If neither channel produces an independent buyer during a defined test window, pivot away from generic web evidence instead of lowering the price blindly.
 
 ## October 26 checkout delivery checkpoint
 
