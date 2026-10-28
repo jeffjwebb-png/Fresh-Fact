@@ -1,6 +1,16 @@
 # FreshFact project status
 
-Updated 2026-10-27. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-28. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 28 security and operations checkpoint
+
+Commit `dab5ea0c7b4e4d74498c775ab2610983774ea277` overrides the transitive `qs` dependency to patched release 6.17.0 after advisory `GHSA-6pq8-jhm2-2vcw` appeared against the 6.16.0 release pinned by Express 4. This cleared the new moderate-severity finding without changing Express or x402 majors. A clean install passes all 64 tests, and `npm audit` is back to the eight previously documented high-severity paths that cascade from the unresolved Zod advisory. Do not apply npm's incompatible x402/CDP downgrades for those remaining paths.
+
+Render deployed the security commit successfully as `dep-dbh1an2jnfac739stgng`. After deployment, the landing page, `/health`, checkout, OpenAPI, `llms.txt`, and x402 catalog returned 200. Evidence, Verify, and Research returned correct x402 v2 challenges for 10,000/30,000/50,000 USDC atomic units on Base mainnet with Bazaar metadata. No error-level or HTTP 5xx logs were found in the checked window. Memory remained below 22% of the 512 MB limit.
+
+No `paymentPresented:true` or `deliverySucceeded:true` event occurred since the October 27 checkpoint. Official Coinbase discovery search for `fresh-fact.onrender.com`, Coinbase merchant discovery for the configured pay-to address, x402.new, and PayAPI Market all still return no FreshFact resource. PayAPI now reports 1,065 live listings, 1,054 verified listings, and 6,324 endpoints. Commercial evidence therefore remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 outside revenue. Exclude every owner test.
+
+Highest-value objective remains distribution: obtain one public catalog listing or direct independent developer integration, then measure settlement, delivery, and repeat use. Do not add features or lower the price before that test. If a listed or directly integrated Evidence endpoint still produces no independent purchase during a defined test window, pivot away from generic web evidence.
 
 ## October 27 discovery and operations checkpoint
 
