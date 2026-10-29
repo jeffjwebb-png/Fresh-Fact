@@ -1,6 +1,24 @@
 # FreshFact project status
 
-Updated 2026-10-28. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-29. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 29 x402 security and distribution checkpoint
+
+Commit `1bb297953a998ca736a7646cd85a4665c44dbdac` upgraded the Base-relevant x402 packages from 2.28.0 to 2.29.0, whose core/EVM/extensions packages use patched Zod 4.6.7. Removing the apparently unused `@x402/svm` dependency reduced the audit from eight high-severity paths to three and passed the existing 64 tests, but Render deployment `dep-dbhmeaks728c73db6hf0` correctly rejected the new instance: `@coinbase/cdp-sdk` imports `@x402/svm` at production startup even though FreshFact does not use Solana. Render kept the previous release serving during the failed zero-downtime rollout.
+
+Repair commit `c10c4faf8dc89152063c1a102356a6d56d0f60e9` restores `@x402/svm` 2.28.0, the newest release compatible with Coinbase SDK's Solana Kit 5 dependency, while keeping the Base x402 packages on 2.29.0. It also adds a regression test that starts the real `Server.js` process and requires `/health` to answer. All 65 tests pass. The audit is reduced from eight high-severity paths to five; the remaining findings are in the Coinbase SDK/Zod 3/abitype chain and the pinned compatibility copy of x402/SVM. npm still proposes incompatible changes, so do not force them.
+
+Render deployment `dep-dbhmh7c9v7es73bi4pag` is live. The landing page, health, browser checkout, OpenAPI, `llms.txt`, and x402 catalog all return 200. Evidence, Verify, and Research return correct x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet with Bazaar metadata. No error-level or HTTP 5xx event occurred after deployment.
+
+No `paymentPresented:true`, `deliverySucceeded:true`, error-level, or HTTP 5xx event occurred between the October 28 checkpoint and this run. Before today's dependency deployment, memory peaked at approximately 103.6 MB of the 536.9 MB limit (19.3%).
+
+Exact live checks still find no FreshFact resource in Coinbase Bazaar, x402.new, PayAPI Market, x402.direct, Agentic Market, or public web search. PayAPI now reports 1,109 live listings, 1,098 verified listings, and 6,379 endpoints. x402-list reports 10,755 buyers and approximately $324,196 paid to measured services over 30 days, but 70.1% of that volume went to one service and the top ten captured 95.4%. This is evidence that buyers exist but demand is highly concentrated; it is not evidence of demand for FreshFact.
+
+Do not spend the $1 x402-list review fee for Render-hosted submissions or the $99 annual x402.pub developer fee under the no-spend constraint. Agentic Market and x402.new both depend on Bazaar indexing, so their absence is the same unresolved discovery blocker rather than a separate submission task.
+
+Commercial evidence remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 outside revenue. Exclude every owner test.
+
+Highest-value objective: obtain one free public catalog listing or one direct independent developer integration, then measure settlement, delivery, and repeat usage. If a listed or directly integrated Evidence endpoint produces no independent purchase during a defined test window, pivot away from generic web evidence rather than adding features or paying listing fees.
 
 ## October 28 security and operations checkpoint
 
