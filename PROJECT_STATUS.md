@@ -1,6 +1,22 @@
 # FreshFact project status
 
-Updated 2026-10-29. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-30. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 30 operations and discovery checkpoint
+
+No source commit appeared after the October 29 checkpoint. Production remains on repair release `c10c4faf8dc89152063c1a102356a6d56d0f60e9` and Render deployment `dep-dbhmh7c9v7es73bi4pag` remains live. A fresh checkout passes all 65 tests, including the real-server startup test. `npm audit --omit=dev` remains at five high-severity dependency paths and zero critical, moderate, or low findings; the available package versions have not changed, and the remaining Coinbase SDK/Solana compatibility chain still has no supported upgrade. Do not force the incompatible x402/Solana or Express/Undici major upgrades.
+
+The landing page, health, browser checkout, OpenAPI, `llms.txt`, `/.well-known/x402`, and the x402 catalog return 200. Evidence, Verify, and Research return correct x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet with Bazaar metadata. Render recorded no error-level or HTTP 5xx event after the prior checkpoint. Memory peaked at approximately 146.6 MB of the 536.9 MB limit (27.3%).
+
+One automated discovery sweep at 2026-10-29T23:59Z requested OpenAPI, `/.well-known/x402`, `llms.txt`, the landing page, paid routes, `robots.txt`, and `/.well-known/agent-card.json`. Its `HEAD /api/evidence` request included a payment header but was rejected with HTTP 405 and `deliverySucceeded:false`; it is not a paid call, buyer, or revenue event. FreshFact is a paid HTTP API, not an A2A protocol server, so do not publish a misleading A2A Agent Card merely to satisfy a generic scanner.
+
+FreshFact still has zero results in Coinbase Bazaar and x402.new and is absent from PayAPI's current 1,131 live listings, 1,120 verified listings, and 6,388 endpoints. The only PayAPI email remains the October 21 submission receipt; there is no approval, rejection, paid canary, or follow-up. Current x402.new WEB Extract comparables remain $0.003 with 352 calls/10 payers and $0.02 with 118 calls/21 payers over 30 days. FreshFact's $0.01 price remains inside that observed range, so discovery—not price—is still the first test.
+
+Render still uses its default TCP health check even though `/health` is fast and returns 200. Configuring `/health` as the Render HTTP health-check path is a worthwhile reliability improvement when the service-setting update is available; it is not the current revenue blocker and does not justify recreating the service.
+
+Commercial evidence remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 outside revenue. Exclude every owner test and every unpaid or rejected scanner request.
+
+Highest-value objective: obtain one free public catalog listing or one direct independent developer integration, then measure settlement, delivery, and repeat usage. Do not add products, lower the price, or spend listing fees before that distribution test. If real distribution produces no independent purchase during a defined test window, pivot away from generic web evidence.
 
 ## October 29 x402 security and distribution checkpoint
 
