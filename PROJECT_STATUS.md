@@ -1,6 +1,22 @@
 # FreshFact project status
 
-Updated 2026-10-30. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-10-31. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## October 31 security, delivery, and distribution checkpoint
+
+A fresh install exposed a new high-severity `follow-redirects` credential-forwarding advisory affecting 1.16.1. FreshFact now pins patched 1.16.2 in `package.json` and `package-lock.json` (commits `34401607863f919d3709b80841b8e315a0845cbe` and `2911fb46fe1b089a06dfc9e7edf32f4d7b6da910`). All 65 tests pass after a clean install, including the real-server startup test and paid-delivery buffering tests for Evidence, Verify, and Research. The audit returned to five high-severity dependency paths and zero critical, moderate, or low findings; the remaining findings are the known Coinbase SDK/Solana/Zod compatibility chain and still cannot be force-upgraded without breaking startup.
+
+Render deployment `dep-dbj0qc5659jc739dslfg` for commit `2911fb46fe1b089a06dfc9e7edf32f4d7b6da910` is live. The landing page, `/health`, browser checkout, OpenAPI, `llms.txt`, `/.well-known/x402`, and x402 catalog return 200. Evidence, Verify, and Research return correct x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet, to the configured recipient, with Bazaar metadata. No post-deployment error-level logs or HTTP 5xx responses appeared.
+
+Output validation is concrete, not inferred. The extraction benchmark succeeded on 24 of 25 current public pages; the one failure was an AWS page returning a visible “Site Unavailable” response, which FreshFact correctly rejected instead of selling. The exact production Verify preparation path returned three relevant passages from a live Wikipedia source with a SHA-256 content hash and no CSS leakage. Research returned nine passages across three live Wikipedia sources with zero unavailable sources and no CSS leakage. Existing tests prove the middleware withholds the prepared private output until settlement and returns it after successful settlement. The October 26 owner Evidence payment remains the only real on-chain delivery proof; Verify and Research still lack real-wallet paid fulfillment evidence.
+
+Between the October 30 checkpoint and this run, Render recorded no request with `paymentPresented:true` and no `deliverySucceeded` event. All paid-route probes were unpaid challenges or rejected wrong-method requests. Commercial evidence therefore remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 outside revenue. Exclude every owner test.
+
+FreshFact remains absent from Coinbase Bazaar search and x402.new. PayAPI now reports 1,149 live listings, 1,137 verified listings, 6,419 endpoints, and 738 providers, but still has no exact FreshFact name or host match. Distribution remains the verified commercial blocker; pricing has not been disproven.
+
+Render still uses the default TCP health check even though `/health` is fast and returns 200. Configure `/health` as the HTTP health-check path when a supported service-setting action is available; do not recreate the service solely for this.
+
+Highest-value objective: obtain one free public listing or one direct independent developer integration, then measure settlement, delivered output, and repeat usage. If genuine distribution produces no independent purchase during a defined test window, pivot away from generic web evidence. Long-term target math is unchanged: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day. These are targets, not predictions.
 
 ## October 30 operations and discovery checkpoint
 
