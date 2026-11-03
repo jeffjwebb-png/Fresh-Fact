@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-02. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-03. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 3 operations, delivery, and discovery checkpoint
+
+No source commit appeared after the November 2 checkpoint. Render correctly ignored checkpoint commit `1dc9b68eb29dda9644a00f063ac0b67108fa93ac`; production remains on commit `2911fb46fe1b089a06dfc9e7edf32f4d7b6da910` and live deployment `dep-dbj0qc5659jc739dslfg`. All 65 tests pass, including real-server startup and paid-delivery buffering. `npm audit --omit=dev` remains at five high-severity dependency paths and zero critical, moderate, or low findings. The remaining Coinbase SDK/Solana/Zod chain still has no supported nonbreaking upgrade; do not force incompatible package changes.
+
+The landing page, `/health`, `/checkout`, OpenAPI, `llms.txt`, `/.well-known/x402`, and the x402 catalog return 200. Evidence, Verify, and Research return correct x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet, to the configured recipient, with Bazaar metadata. Render recorded no HTTP 5xx response, error-text event, presented payment, or successful delivery event in the checked period. The service stayed at one instance; memory peaked at approximately 110.5 MB of the 536.9 MB limit (20.6%), and maximum sampled CPU remained below 0.9% of its 0.5-core limit.
+
+Commercial evidence remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 outside revenue. Exclude every owner test.
+
+FreshFact remains absent from exact Coinbase Bazaar and x402.new searches. PayAPI has grown to 1,266 live listings, 1,255 verified listings, 6,455 endpoints, and 755 providers, but still contains no exact FreshFact name or host match. Gmail contains no PayAPI or FreshFact response after November 2. Continued marketplace growth without a FreshFact listing strengthens the conclusion that distribution—not price or payment operation—is the current blocker.
+
+Render still uses its default TCP health check even though `/health` is fast and returns 200. Configure `/health` as the HTTP health-check path when a supported service-setting action becomes available; do not recreate the service solely for this.
+
+Highest-value objective: obtain a confirmed free catalog listing or one direct independent developer integration, then measure settlement, delivered output, and repeat usage. If genuine distribution produces no independent purchase during a defined test window, pivot away from generic web evidence. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 2 operations, delivery, and discovery checkpoint
 
