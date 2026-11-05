@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-04. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-05. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 5 x402 reliability and distribution checkpoint
+
+Commit `71e988188b87b7ab2bb4d40e0baa627fc58f8e6a` upgrades the Base-relevant x402 core, EVM, Express, and Bazaar extensions from 2.29.0 to 2.30.0. Version 2.30.0 improves settlement-preflight cancellation, isolates advisory hook failures so they cannot change a completed settlement outcome, and rejects non-object decoded payment headers. Keep `@x402/svm` pinned at 2.28.0: 2.30.0 requires Solana Kit 8 while Coinbase CDP SDK 1.60.0 still requires Solana Kit 5.5.1 and imports the SVM package during production startup. All 65 tests pass after the mixed-version install, including real-server startup, exact Base payment terms, failed settlement, successful paid delivery, browser checkout, and Bazaar behavior. The audit remains at five high-severity dependency paths and zero critical, moderate, or low findings; all five still come from the Coinbase/Solana/Zod compatibility chain.
+
+Render deployment `dep-dbmaoqjbc2fs73b1fpm0` is live on the exact upgrade commit. The landing page, `/health`, `/checkout`, OpenAPI, `llms.txt`, `/.well-known/x402`, and the x402 catalog return 200. Evidence, Verify, and Research return correct x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet, to the configured recipient, with Bazaar metadata. No error-level or HTTP 5xx log appeared before or after deployment. Over the checked period, the service remained at one instance; memory peaked at approximately 156.6 MB of the 536.9 MB limit (29.2%) during deployment and maximum sampled CPU was approximately 2.0% of the 0.5-core limit.
+
+No request with `paymentPresented:true` and no `deliverySucceeded:true` event appeared after the November 4 checkpoint. Commercial evidence therefore remains zero independent buyers, zero independent paid calls, zero repeat buyers, and $0 outside revenue. Exclude every owner test.
+
+FreshFact remains absent from exact Coinbase Bazaar, x402.new, and PayAPI searches. PayAPI now reports 2,510 listed APIs, 1,314 settlement-verified APIs, 29,770 endpoints, and 1,707 providers. That is a substantial catalogue expansion, but still no FreshFact listing or follow-up email after the October 21 submission. PayAPI's current free submission path can update a pending listing, but refreshing it requires transmitting the owner's contact email to the external service; the automated attempt was blocked because this run lacks explicit authorization to reshare that personal data. Do not invent an alternative address or bypass that restriction.
+
+Render still uses its default TCP health check even though `/health` is fast and returns 200. Configure `/health` as the HTTP health-check path when a supported service-setting action becomes available; do not recreate the service solely for this.
+
+Highest-value objective: obtain explicit authorization to refresh the existing free PayAPI submission, or secure one direct independent developer integration, then measure settlement, delivered output, and repeat usage. If genuine distribution produces no independent purchase during a defined test window, pivot away from generic web evidence. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 4 operations, delivery, and discovery checkpoint
 
