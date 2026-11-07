@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-06. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-07. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 7 first independent payments and public distribution checkpoint
+
+FreshFact Research is now publicly listed and payment-verified on [PayAPI Market](https://payapi.market/api/freshfact-research), and an exact Coinbase Bazaar discovery search now returns the live Research resource. This resolves the verified distribution blocker recorded on November 6. x402.new still returns no exact FreshFact result, so distribution is real but not yet complete.
+
+PayAPI's independent verification wallet paid 50,000 atomic USDC ($0.05) on Base at 2026-11-07T08:30:24Z in transaction `0xad9eb925cf3c176aab40b28b825a384856d71cfe10a712c134cb920e8975938b`. Production returned HTTP 200 with `paymentPresented:true` and `deliverySucceeded:true`. PayAPI marks the route payment-verified and records the same transaction. A second distinct external payer fingerprint completed another $0.05 Research call at 2026-11-07T12:18:40Z; Base transaction `0x178cf6239251832d039ce6f598caae8cb8a79c8303f883b73e57cccd3f5d43bd` transferred another 50,000 atomic USDC to the configured recipient, and production again returned HTTP 200 with successful delivery. The second wallet's operator is not independently identified, so do not label that call an organic customer purchase.
+
+Commercial evidence, excluding every owner-controlled test, is now: two independent external paid calls, two distinct external payer fingerprints, zero repeat buyers, and $0.10 gross Base USDC revenue. One call is explicitly a marketplace verification canary and the second appears during discovery indexing activity; these prove settlement, fulfillment, and public discoverability, but they do not yet prove recurring market demand.
+
+No source commit appeared after November 6. Production remains on code commit `cd37e6b6981f0f13e3941b1269fb913132d62449` and Render deployment `dep-dbmvnttckfvc73959d4g`. A clean install passes all 65 tests. `npm audit --omit=dev` reports three high-severity dependency paths and zero critical, moderate, or low findings; the remaining Coinbase SDK / abitype / Zod 3 chain has no supported nonbreaking remediation. Express 5 and Undici 8 are major upgrades and were not forced.
+
+Production health reports Evidence, Verify, and Research active on the expected release. The landing page, browser checkout, OpenAPI, `llms.txt`, `/.well-known/x402`, and the catalog return 200. The three paid routes issue correct x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet, to the configured recipient, with Bazaar metadata. No error-level or HTTP 5xx event appeared in the checked period. Maximum sampled CPU was approximately 0.34% of the 0.5-core limit and memory peaked at approximately 140.1 MB of 536.9 MB (26.1%). Render still uses its default TCP health check; configure `/health` when a supported in-place setting action becomes available, but do not recreate the service solely for that.
+
+Highest-value objective: use the new PayAPI and Coinbase Bazaar visibility to obtain the first clearly organic independent buyer and then a repeat purchase. Do not cut the $0.05 Research price yet: two successful external settlements validate the transaction path, while willingness to pay and retention remain untested. If public distribution produces no organic or repeat demand during a defined observation window, pivot rather than adding speculative endpoints. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 6 dependency, operations, and distribution checkpoint
 
