@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-08. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-09. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 9 post-listing observation checkpoint
+
+No request with `paymentPresented:true` or `deliverySucceeded:true` appeared after the November 8 checkpoint. Commercial evidence therefore remains three independent external paid calls, three distinct external payer fingerprints, zero repeat buyers, and $0.15 gross Base USDC revenue, excluding every owner-controlled test. Coinbase Bazaar still reports two calls from two unique payers; the third successful external settlement remains proven by FreshFact's production log and Base transaction but is not reflected in Coinbase's published quality counters.
+
+Public discovery is stable. PayAPI still lists FreshFact Research publicly and payment-verified, and Coinbase Bazaar exact search still returns the Research resource with the correct $0.05 Base-USDC terms and Bazaar schema. x402.new still returns no exact FreshFact name or host result. No PayAPI or FreshFact follow-up email arrived after November 8.
+
+Marketplace and scanner traffic remains substantial but noncommercial: Render recorded 644 Research-route requests during the checked period, all of which were unpaid 402 challenges or non-purchase probes. Do not count 402 responses, wrong-method requests, discovery fetches, or scanner traffic as buyers or revenue.
+
+No source commit appeared after the November 8 checkpoint. Production remains on code commit `cd37e6b6981f0f13e3941b1269fb913132d62449` and live deployment `dep-dbmvnttckfvc73959d4g`; Render recorded no failure, restart, new deploy, error-level log, or HTTP 5xx event. A clean install passes all 65 tests. `npm audit --omit=dev` remains at three high-severity dependency paths and zero critical, moderate, or low findings. The remaining Coinbase SDK / abitype / Zod 3 chain still has no supported nonbreaking remediation; Express 5 and Undici 8 remain major upgrades and were not forced.
+
+Production health reports Evidence, Verify, and Research active on the expected release. The landing page, browser checkout, OpenAPI, `llms.txt`, `/.well-known/x402`, and the catalog return 200. Evidence, Verify, and Research issue correct x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet, to the configured recipient, with Bazaar metadata. Maximum sampled CPU was approximately 0.57% of the 0.5-core limit and memory peaked at approximately 99.4 MB of 536.9 MB (18.5%). Render still uses its default TCP health check; configure `/health` when a supported in-place setting action becomes available, but do not recreate the service solely for that.
+
+Highest-value objective remains the defined public-distribution test through November 14: identify the first clearly organic buyer and a repeat purchase. Do not lower the $0.05 Research price while the test is running. If listing visibility produces no organic or repeat demand by the end of the window, pivot away from Wikipedia-only Research rather than adding speculative endpoints. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 8 post-listing demand checkpoint
 
