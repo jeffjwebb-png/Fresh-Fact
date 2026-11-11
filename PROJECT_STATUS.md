@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-10. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-11. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 11 dependency and demand checkpoint
+
+Commit `c964920be2b16f263e3128478a0e32f88ce04280` updates Coinbase CDP SDK from 1.61.0 to the newly published 1.62.0 release. The update changes only `package.json` and `package-lock.json`, preserves Solana Kit 8.6.0 and every x402 package at 2.30.0, and passes all 65 tests including production startup, exact Base terms, failed settlement, paid-delivery simulation, browser checkout, and Bazaar metadata. Render deployment `dep-dbq963ks728c7392p0dg` is live on the exact commit. Post-deployment checks found no error-level log or HTTP 5xx response.
+
+The production landing page, browser checkout, `/health`, OpenAPI, `llms.txt`, `/.well-known/x402`, and the catalog return 200. `/health` reports the new release and status `ok`. Evidence, Verify, and Research issue correct x402 v2 challenges in the `PAYMENT-REQUIRED` header for 10,000/30,000/50,000 atomic USDC on Base mainnet, to the configured recipient, with Bazaar metadata. Maximum sampled CPU was approximately 1.90% of the 0.5-core limit and memory peaked at approximately 109.2 MB of 536.9 MB (20.3%); the service remained at one instance.
+
+No request with `paymentPresented:true` or `deliverySucceeded:true` appeared after the November 10 checkpoint. Commercial evidence therefore remains three independent external paid calls, three distinct external payer fingerprints, zero confirmed organic buyers, zero repeat buyers, and $0.15 gross Base USDC revenue, excluding every owner-controlled test. During the checked period Render recorded 559 unpaid Research POST challenges and 83 wrong-method Research requests. These directory, discovery, and scanner requests are not buyers or revenue.
+
+PayAPI still lists Research publicly, settlement-verified, and at $0.05 per call; it also includes FreshFact in its Intelligence category. Coinbase-derived Agenstry discovery remains present but reports no observed invocation during the last seven days. Fresh exact search still finds no FreshFact service on x402.new, including its Onrender provider page. No FreshFact, PayAPI, Agenstry, or x402 follow-up email arrived after November 10.
+
+`npm audit --omit=dev` remains at three high-severity dependency paths and zero critical, moderate, or low findings. Coinbase 1.62.0 continues to depend on abitype 1.0.6 and Zod 3.25.76, so the Zod collection-memory advisory has no supported nonbreaking remediation. The audit's suggested downgrade to Coinbase 1.7.0 is unsafe and was not applied. Express 5 and Undici 8 remain major upgrades and were not forced.
+
+Highest-value objective remains the defined public-distribution test through November 14: identify the first clearly organic buyer and a repeat purchase. Do not lower the $0.05 Research price while the test is running. Current marketplace evidence shows cheaper live-web search, retrieval, and Wikipedia-summary products receiving calls, while FreshFact's Wikipedia-only Research has produced no repeat usage. If expanded visibility still produces no organic or repeat demand by November 14, pivot away from Wikipedia-only Research toward a product selected from demonstrated paid demand rather than adding speculative endpoints. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 10 distribution and demand checkpoint
 
