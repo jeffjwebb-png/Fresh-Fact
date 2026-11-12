@@ -1,6 +1,22 @@
 # FreshFact project status
 
-Updated 2026-11-11. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-12. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 12 Verify payment and repeat-payer checkpoint
+
+FreshFact Verify completed a new external paid call at 2026-11-12T08:42:56Z. Production returned HTTP 200 with `paymentPresented:true`, `deliverySucceeded:true`, and payer fingerprint `f197910b8ab29f4f`. Verify is fixed at 30,000 atomic Base USDC, so the successful call adds $0.03 gross revenue. The fingerprint exactly matches PayAPI's November 7 Research-verification call, making this the first verified repeat external payer fingerprint and the first cross-product repeat. PayAPI's published methodology says its settlement verification pays a named route from its own wallet, so the evidence strongly indicates another marketplace verification rather than an organic buyer. Do not attribute it to Moltbook or another channel without independent evidence.
+
+Commercial evidence, excluding every owner-controlled test, is now: four external paid calls, three distinct external payer fingerprints, one repeat external payer fingerprint, zero confirmed organic buyers, and $0.18 gross Base USDC revenue. A separate `HEAD /api/evidence` request presented a payment header but returned HTTP 405 with `deliverySucceeded:false`; it did not receive product and is excluded from paid calls and revenue.
+
+No source commit appeared after the November 11 checkpoint. Production remains live on commit `c964920be2b16f263e3128478a0e32f88ce04280` and deployment `dep-dbq963ks728c7392p0dg`. A clean install passes all 65 tests, and every direct dependency is current within its supported major version. Across 1,762 checked logs Render recorded no error-level event or HTTP 5xx response. Maximum sampled CPU was approximately 5.72% of the 0.5-core limit and memory peaked at approximately 188.1 MB of 536.9 MB (35.0%); the service stayed at one instance.
+
+The production landing page, browser checkout, `/health`, OpenAPI, `llms.txt`, `/.well-known/x402`, and the catalog return 200. Evidence, Verify, and Research issue correct x402 v2 challenges in the `PAYMENT-REQUIRED` header for 10,000/30,000/50,000 atomic USDC on Base mainnet, to the configured recipient, with Bazaar metadata. Research received 599 unpaid 402 challenges and 91 wrong-method requests during the checked period; these are discovery or scanner traffic, not purchases.
+
+PayAPI still publicly shows only the Research route as settlement-verified at $0.05; its public page has not yet incorporated today's Verify settlement. Verify's $0.03 price sits within the current $0.02–$0.05 marketplace band for verification products, so there is no evidence-based reason to change it. FreshFact's Moltbook presence adds a distribution channel, but no payment is yet attributable to it. Exact x402.new search still does not return FreshFact.
+
+`npm audit --omit=dev` remains at three high-severity dependency paths and zero critical, moderate, or low findings. Coinbase 1.62.0 still brings abitype 1.0.6 and Zod 3.25.76, so the Zod collection-memory advisory has no supported nonbreaking remediation. The suggested Coinbase downgrade is unsafe and was not applied; Express 5 and Undici 8 remain major upgrades and were not forced.
+
+Highest-value objective through November 14 is now narrower: confirm whether PayAPI publishes Verify as settlement-verified, then obtain the first non-verification organic paid call and determine whether any organic payer returns. The repeat verification proves multi-product settlement and delivery but does not prove market demand. If public distribution still produces no organic purchase by November 14, pivot away from Wikipedia-only Research toward a product selected from demonstrated paid demand rather than adding speculative endpoints. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 11 dependency and demand checkpoint
 
