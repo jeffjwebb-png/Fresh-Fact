@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-12. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-13. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 13 x402 maintenance and final demand-window checkpoint
+
+Commit `0229c2a2425d7c9a9f2d920cb964cb13d2a2a964` updates all five directly installed x402 packages together from 2.30.0 to 2.31.0 and keeps them exactly pinned. A clean install passes all 65 tests, including real production startup, unpaid/invalid/failed-settlement/paid paths for all three products, browser checkout, exact Base terms, and Bazaar metadata. The first auto-deploy failed before production because the file-transfer path corrupted `package.json`; commits `058f41026fe6b83d8fa9f7ed501bf1e7e651cca8` and `0229c2a2425d7c9a9f2d920cb964cb13d2a2a964` repaired the manifest and lockfile. Render retained the previous live release throughout the failed build, and deployment `dep-dbrjhaf6km5c73cf0ih0` is now live on the corrected head.
+
+Production health identifies release `0229c2a2425d7c9a9f2d920cb964cb13d2a2a964` with Evidence, Verify, and Research active. The landing page, browser checkout, `/health`, OpenAPI, `llms.txt`, `/.well-known/x402`, and the catalog return 200. Correctly formed unpaid requests issue x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet to the configured recipient, with Bazaar metadata. Post-deployment logs contain no error-level event or HTTP 5xx response. Over the preceding 24 hours, maximum sampled CPU was approximately 0.63% of the 0.5-core limit, memory peaked at approximately 120.6 MB of 536.9 MB (22.5%), and the service remained at one instance.
+
+No request with `paymentPresented:true` or `deliverySucceeded:true` appeared after the November 12 checkpoint. Commercial evidence, excluding every owner-controlled test, therefore remains four external paid calls, three distinct external payer fingerprints, one repeat external payer fingerprint, zero confirmed organic buyers, and $0.18 gross Base USDC revenue. The repeat fingerprint belongs to PayAPI's marketplace-verification activity, so it proves settlement and delivery but not customer demand.
+
+PayAPI still publicly exposes only FreshFact Research as settlement-verified at $0.05; Verify has not appeared as a separate public listing. FreshFact remains absent from exact x402.new search. Current PayAPI competition includes a settlement-verified HTML-to-Markdown service at $0.02, while current x402.new data shows established web retrieval near $0.002 per call with thousands of calls and multiple payers. Wikipedia-only Research at $0.05 has not produced an identified organic purchase, so lowering its price without a stronger product would not solve the evidence gap.
+
+`npm audit --omit=dev` remains at three high-severity dependency paths and zero critical, moderate, or low findings. Coinbase 1.62.0 still brings abitype 1.0.6 and Zod 3.25.76, so the Zod collection-memory advisory has no supported nonbreaking remediation. The suggested Coinbase downgrade is unsafe and was not applied; Express 5 and Undici 8 remain unforced major upgrades.
+
+Highest-value objective through November 14 is to finish the defined public-distribution window without manufacturing another owner test. If no clearly organic purchase appears, record the demand test as failed and pivot away from Wikipedia-only Research toward a narrowly scoped service selected from demonstrated paid demand, with live web retrieval or deterministic agent-safety/data utility favored over another generic evidence endpoint. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 12 Verify payment and repeat-payer checkpoint
 
