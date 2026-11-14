@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-13. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-14. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 14 demand-window decision and operational checkpoint
+
+The defined November 7-14 public-distribution test is complete. No request with `paymentPresented:true` or `deliverySucceeded:true` appeared after the November 13 checkpoint. Excluding all owner-controlled payments, the verified totals remain four external paid calls, three distinct external payer fingerprints, one repeat external payer fingerprint, and $0.18 gross Base USDC receipts. None is a confirmed organic customer: PayAPI identifies one Research call as its marketplace verification, and the repeat fingerprint is consistent with another verification call. The test therefore did not demonstrate organic demand or retention for the current Wikipedia-only Research product.
+
+Do not interpret the result as a payment or deployment failure. Production remains healthy on release `0229c2a2425d7c9a9f2d920cb964cb13d2a2a964` and Render deployment `dep-dbrjhaf6km5c73cf0ih0`. The landing page, browser checkout, `/health`, OpenAPI, `llms.txt`, `/.well-known/x402`, and the catalog return 200. Correctly formed Evidence, Verify, and Research requests return x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet to the configured recipient, with Bazaar metadata. Logs contain no error-level event or HTTP 5xx response. A clean install passes all 65 tests.
+
+PayAPI still publicly lists only FreshFact Research at $0.05 and identifies the November 7 settlement as a verification payment. Exact FreshFact search still produces no x402.new listing. Current x402.new data shows demand concentrated in live web search and retrieval: StableEnrich EXA Search reports about 44,000 calls per 30 days at $0.01, EXA direct about 6,000 at $0.007, EXA Contents about 5,400 at $0.002, and Oneshot WEB Read about 4,700 at $0.002. This supports a market for live retrieval, but not FreshFact's current Wikipedia-only offer. It also shows that a generic replacement would enter a proven but highly competitive category.
+
+Decision: keep the functioning endpoints live at no additional infrastructure cost, but stop extending or repricing Wikipedia-only Research. Treat its demand test as failed. The next product should be a narrow live-web retrieval or monitoring job selected with a real buyer, not another speculative endpoint. Require either one prepaid design partner or three credible buyer interviews that identify the same recurring task before implementation. A contractor-only vertical is not required; select the vertical from buyer evidence.
+
+`npm audit --omit=dev` still reports three high-severity dependency paths and zero critical, moderate, or low findings. They remain the Coinbase SDK / abitype / Zod collection-memory advisory chain. npm's proposed Coinbase downgrade is incompatible and was not applied. Express 5 and Undici 8 remain major upgrades and were not forced.
+
+Highest-value objective: obtain one prepaid design partner for a narrowly defined recurring live-web retrieval or change-monitoring task, then build only the smallest delivery that partner will use repeatedly. Until that happens, keep FreshFact operational and avoid additional speculative engineering. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 13 x402 maintenance and final demand-window checkpoint
 
