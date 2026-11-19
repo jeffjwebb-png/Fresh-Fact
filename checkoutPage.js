@@ -4,6 +4,7 @@ const BASE_CHAIN_ID = 8453;
 const BASE_CHAIN_HEX = "0x2105";
 const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const EVIDENCE_AMOUNT = "10000";
+const { siteHead } = require("./siteMetadata");
 const CHECKOUT_URL = "https://fresh-fact.onrender.com/checkout";
 const COINBASE_WALLET_URL = `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(CHECKOUT_URL)}`;
 const METAMASK_WALLET_URL = `https://link.metamask.io/dapp/${CHECKOUT_URL.replace(/^https?:\/\//, "")}`;
@@ -39,6 +40,7 @@ function buildCheckoutPage({ payTo, nonce }) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FreshFact Evidence Checkout</title>
   <meta name="description" content="Secure Base USDC checkout for a FreshFact Evidence Receipt.">
+  ${siteHead({ checkout: true })}
   <style nonce="${nonce}">
     :root{color-scheme:light dark;font-family:system-ui,-apple-system,sans-serif}
     body{max-width:720px;margin:0 auto;padding:36px 20px;line-height:1.5}

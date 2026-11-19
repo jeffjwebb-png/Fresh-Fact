@@ -14,6 +14,7 @@ const { evidenceIsEnabled, isPublicEvidenceRequest } = require("./evidenceReleas
 const { methodRequirement, methodIsAllowed } = require("./paidRouteMethods");
 const { SOURCE_CACHE_HEADERS, sourceFreshness } = require("./sourceFreshness");
 const { createEvidenceReceipt } = require("./evidenceReceipt");
+const { siteHead, siteSecurity, registerSiteAssets } = require("./siteMetadata");
 const evidenceEnabled = evidenceIsEnabled();
 
 const { createProductPreparers } = require("./productDelivery");
@@ -21,6 +22,8 @@ const productsEnabled = process.env.FRESHFACT_PRODUCTS_ENABLED === "true";
 const productStatus = productsEnabled ? "Evidence, Verify and Wikipedia Research are available." : "Evidence is available; Verify and Research remain paused.";
 const app = express();
 app.set("trust proxy", 1);
+app.disable("x-powered-by");
+app.use(siteSecurity);
 
 const port = process.env.PORT || 3000;
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -554,8 +557,24 @@ async function start() {
     }
   });
 
+  registerSiteAssets(app);
+
+  // List public browsing pages, never paid API requests or buyer receipts.
+  app.get("/sitemap.xml", (req, res) => {
+    res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://fresh-fact.onrender.com/</loc></url>
+</urlset>`);
+  });
+
+  app.get("/robots.txt", (req, res) => {
+    res.type("text/plain").send("User-agent: *\nAllow: /\nSitemap: https://fresh-fact.onrender.com/sitemap.xml\n");
+  });
+
   app.get("/", (req, res) => {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const nonce = crypto.randomBytes(18).toString("base64");
+    res.set("Content-Security-Policy", `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`);
 
     res.type("html").send(`<!doctype html>
 <html lang="en">
@@ -564,7 +583,8 @@ async function start() {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FreshFact Evidence</title>
   <meta name="description" content="Audit-ready web evidence receipts for AI agents.">
-  <style>
+  ${siteHead({ nonce })}
+  <style nonce="${nonce}">
     body{font-family:system-ui,-apple-system,sans-serif;max-width:900px;margin:0 auto;padding:48px 22px;line-height:1.55}
     code,pre{background:#f3f3f3;border-radius:8px}pre{padding:14px;overflow:auto}
     .price{font-size:1.25rem;font-weight:700}
