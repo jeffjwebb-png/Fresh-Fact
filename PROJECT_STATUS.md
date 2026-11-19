@@ -2,6 +2,10 @@
 
 Updated 2026-11-18. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
 
+## November 18: new distribution channels
+
+Agent402 and Agent Bazaar by Saylor Innovations now index all three FreshFact products. See `DISTRIBUTION_STATUS.md` for confirmed API responses, listing IDs, limits and remaining candidates. Release `bf1cbddf6300f8657e282119caefe1e38f8ebe7d` is live with a compatible x402 v2 manifest at `/.well-known/x402.json`; all 67 tests pass and all three manifest offers match live unpaid 402 quotes. This is discovery progress, not a purchase or proof of organic demand. No funds were spent.
+
 ## November 18: 402 Registry website review fixes
 
 Jeff explicitly authorized completing all eight findings behind the November 11 score of 77/100. Commit `357c38f1cd638d34c75e5a83d3e75590c86f342f` implements sitemap plus robots discovery, JSON-LD, social preview metadata and a 1200×630 PNG, canonical URLs, ICO/SVG favicons, max-image-preview:large, HTTPS HSTS, and standard security headers with nonce-scoped homepage CSP. See `REVIEW_FIXES.md` for scope. All 65 tests pass, including expanded real-server metadata, asset, sitemap and header checks. The exact release is confirmed live through /health; sitemap, robots, icons and social image return 200. No registry rescore or improved score is claimed, and no payment was sent. Existing demand strategy and commercial counts are unchanged; these are authorized website maintenance fixes, not a new speculative product.
