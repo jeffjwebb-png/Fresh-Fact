@@ -15,6 +15,7 @@ const { methodRequirement, methodIsAllowed } = require("./paidRouteMethods");
 const { SOURCE_CACHE_HEADERS, sourceFreshness } = require("./sourceFreshness");
 const { createEvidenceReceipt } = require("./evidenceReceipt");
 const { siteHead, siteSecurity, registerSiteAssets } = require("./siteMetadata");
+const { buildX402Manifest } = require("./x402Manifest");
 const evidenceEnabled = evidenceIsEnabled();
 
 const { createProductPreparers } = require("./productDelivery");
@@ -558,6 +559,11 @@ async function start() {
   });
 
   registerSiteAssets(app);
+
+  app.get("/.well-known/x402.json", (req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json(buildX402Manifest(routes, { evidenceEnabled, productsEnabled }));
+  });
 
   // List public browsing pages, never paid API requests or buyer receipts.
   app.get("/sitemap.xml", (req, res) => {

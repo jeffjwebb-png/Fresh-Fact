@@ -55,6 +55,12 @@ test("production server imports its complete dependency graph and becomes health
   assert.ok(Date.now() < deadline, "FreshFact did not become healthy within 10 seconds:\n" + output);
 
   const base = `http://127.0.0.1:${port}`;
+  const manifest = await fetch(base + "/.well-known/x402.json");
+  assert.equal(manifest.status, 200);
+  assert.equal(manifest.headers.get("cache-control"), "no-store");
+  const discovery = await manifest.json();
+  assert.equal(discovery.x402Version, 2);
+  assert.deepEqual(discovery.resources, []);
   const home = await fetch(base + "/", { headers: { "X-Forwarded-Proto": "https" } });
   assert.equal(home.status, 200);
   assert.equal(home.headers.get("strict-transport-security"), "max-age=31536000");
