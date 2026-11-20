@@ -57,7 +57,13 @@ function evidenceFromPage(page, query) {
   };
 }
 
-async function searchWikipedia(query) {
+const WIKIPEDIA_SEARCH_ATTEMPTS = 2;
+const WIKIPEDIA_RETRY_DELAY_MS = 200;
+
+async function searchWikipedia(query, {
+  fetchImpl = fetch,
+  delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
+} = {}) {
   const endpoint = new URL("https://en.wikipedia.org/w/api.php");
   endpoint.searchParams.set("action", "query");
   endpoint.searchParams.set("list", "search");
@@ -65,10 +71,24 @@ async function searchWikipedia(query) {
   endpoint.searchParams.set("srnamespace", "0");
   endpoint.searchParams.set("srlimit", String(MAX_SOURCES));
   endpoint.searchParams.set("format", "json");
-  const response = await fetch(endpoint, {
-    signal: AbortSignal.timeout(10000),
-    headers: { "User-Agent": "FreshFactEvidenceBot/1.0 (https://fresh-fact.onrender.com)", Accept: "application/json" },
-  });
+  let response;
+  let lastError;
+  for (let attempt = 1; attempt <= WIKIPEDIA_SEARCH_ATTEMPTS; attempt += 1) {
+    try {
+      response = await fetchImpl(endpoint, {
+        signal: AbortSignal.timeout(10000),
+        headers: { "User-Agent": "FreshFactEvidenceBot/1.0 (https://fresh-fact.onrender.com)", Accept: "application/json" },
+      });
+      const retryable = response.status === 429 || response.status >= 500;
+      if (!retryable || attempt === WIKIPEDIA_SEARCH_ATTEMPTS) break;
+      await response.body?.cancel();
+    } catch (error) {
+      lastError = error;
+      if (attempt === WIKIPEDIA_SEARCH_ATTEMPTS) throw error;
+    }
+    await delay(WIKIPEDIA_RETRY_DELAY_MS);
+  }
+  if (!response) throw lastError || new Error("SEARCH_UNAVAILABLE");
   if (!response.ok) throw new Error("SEARCH_UNAVAILABLE");
   const body = await response.text();
   if (body.length > 100000) throw new Error("SEARCH_UNAVAILABLE");
