@@ -1,6 +1,18 @@
 # FreshFact project status
 
-Updated 2026-11-19. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-20. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 20: transient Research failure fixed
+
+A correctly formed Research request returned HTTP 502 before any payment challenge, so no funds were requested or charged. Three immediate retries returned the expected 402, identifying a bounded transient failure in the upstream Wikipedia search preflight rather than a persistent product or x402 failure. Commit `065ab82d67aeb59bcac43328228d169efff9d723` makes Research retry one time after 200 ms only for network exceptions, HTTP 429, and HTTP 5xx responses. Permanent 4xx failures still return immediately, and payment remains gated on successful deliverability preflight. Two regression tests cover retryable 503 and non-retryable 400 behavior; a clean install now passes all 69 tests.
+
+Render deployment `dep-dc0734gu01pc73bhssig` is live on the exact fix commit. Production `/health` reports that release. The landing page, browser checkout, OpenAPI, `llms.txt`, x402 discovery documents and manifest, robots, and sitemap return 200. Evidence, Verify, and three separate Research queries return matching x402 v2 challenges for 10,000/30,000/50,000 atomic USDC on Base mainnet with Bazaar metadata. No error-level event or HTTP 5xx response appeared after deployment.
+
+Commercial evidence is unchanged after excluding every owner-controlled test: four external paid calls, three distinct external payer fingerprints, one repeat external payer fingerprint, zero confirmed organic customers, zero confirmed organic repeat buyers, and $0.18 gross Base USDC receipts. Today's 402 validation requests are not purchases or revenue. PayAPI continues to expose Research as settlement-verified; exact x402.new search still does not show FreshFact. Existing Agent Bazaar and Agent402 listings remain the current distribution baseline.
+
+`npm audit --omit=dev` remains at three high-severity dependency paths and zero critical, moderate, low, or informational findings. They remain the Coinbase SDK 1.62.0 / abitype 1.0.6 / Zod 3.25.76 constrained-collection memory advisory chain. npm's proposed Coinbase 1.7.0 downgrade is incompatible and was not applied. Express 5 and Undici 8 are unsupported major upgrades and were not forced.
+
+Highest-value objective: obtain one independently funded paid delivery through a current listing and determine whether that payer repeats. Do not mistake unpaid 402 probes for demand or add another speculative product. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 19: post-distribution operational checkpoint
 
