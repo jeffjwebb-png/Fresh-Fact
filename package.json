@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "@coinbase/cdp-sdk": "^1.62.0",
-    "@x402/core": "2.31.0",
-    "@x402/evm": "2.31.0",
-    "@x402/express": "2.31.0",
-    "@x402/extensions": "2.31.0",
-    "@x402/svm": "2.31.0",
+    "@x402/core": "2.32.0",
+    "@x402/evm": "2.32.0",
+    "@x402/express": "2.32.0",
+    "@x402/extensions": "2.32.0",
+    "@x402/svm": "2.32.0",
     "cheerio": "^1.0.0",
     "express": "^4.21.2",
     "undici": "^6.29.0"
