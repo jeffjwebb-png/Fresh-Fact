@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-20. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-21. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 21: x402 2.32.0 maintenance and distribution checkpoint
+
+Commit `44e6f78ca0c90bc3ac2e5e971e97b09dbcf47f91` updates all five directly installed x402 packages together from 2.31.0 to 2.32.0 and keeps them exactly pinned. The release rejects missing or non-string payment assets cleanly instead of leaking a client `TypeError`, and bounds Bazaar discovery list/search calls with the configured facilitator timeout. Coinbase CDP SDK 1.62.0 resolves the same deduplicated 2.32.0 package set. A clean install passes all 69 tests, including real production startup, exact Base terms, unpaid/invalid/failed-settlement/paid behavior for all products, browser checkout, and Bazaar metadata.
+
+Render deployment `dep-dc0smpm7bikc739qgcg0` is live on that exact commit. Production `/health` reports the release. The landing page, checkout, OpenAPI, `llms.txt`, x402 discovery documents and manifest, robots, and sitemap return 200. Evidence, Verify, and Research issue matching x402 v2 challenges for 10,000/30,000/50,000 atomic Base USDC to the configured recipient with Bazaar metadata. Post-deployment logs contain no error-level event or HTTP 5xx response.
+
+No `paymentPresented:true` or `deliverySucceeded:true` event appeared after the November 20 checkpoint. Excluding every owner-controlled test, commercial evidence remains four external paid calls, three distinct external payer fingerprints, one repeat external payer fingerprint, zero confirmed organic customers, zero confirmed organic repeat buyers, and $0.18 gross Base USDC receipts. Unpaid 402 probes are discovery traffic, not buyers or revenue.
+
+Agent Bazaar still returns all three verified resources as IDs 81876/81877/81878 with the correct prices and payment terms. Agent402 still indexes all three tools, reports successful crawl health and exact price matches, and makes the routes callable in its limited `unproven` lane; it still records zero buyer-router deliveries and `settlement_required` for normal dispatch eligibility. PayAPI continues to expose Research as settlement-verified from November 7. Additional monitoring catalogs now show FreshFact as up, but none provides evidence of an organic purchase.
+
+`npm audit --omit=dev` remains at three high-severity dependency paths and zero critical, moderate, low, or informational findings. They remain the Coinbase SDK 1.62.0 / abitype 1.0.6 / Zod 3.25.76 constrained-collection memory advisory chain. npm's suggested Coinbase 1.7.0 downgrade is incompatible and was not applied. Express 5 and Undici 8 remain unsupported major upgrades and were not forced.
+
+Highest-value objective: obtain one independently funded paid delivery through a current listing and determine whether that payer repeats. Do not build around catalog traffic alone; if no buyer emerges, require one prepaid design partner or three credible interviews naming the same recurring live-web job before another product build. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 20: transient Research failure fixed
 
