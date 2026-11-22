@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-21. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-22. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 22: operational and demand checkpoint
+
+No source commit or deployment appeared after the November 21 x402 2.32.0 upgrade. Production remains live on release `44e6f78ca0c90bc3ac2e5e971e97b09dbcf47f91` and Render deployment `dep-dc0smpm7bikc739qgcg0`. A clean install of the exact GitHub head passes all 69 tests. The landing page, checkout, health, OpenAPI, `llms.txt`, x402 discovery documents and manifest, robots, and sitemap return 200. Evidence, Verify, and Research issue matching x402 v2 challenges for 10,000/30,000/50,000 atomic Base USDC with Bazaar metadata. Render recorded no error-level event or HTTP 5xx response in the checked period; the service stayed at one instance, sampled CPU remained below 0.004 core, and sampled memory stayed below 125 MB.
+
+No `paymentPresented:true` or `deliverySucceeded:true` event appeared after the November 21 checkpoint. Excluding every owner-controlled test, commercial evidence remains four external paid calls, three distinct external payer fingerprints, one repeat external payer fingerprint, zero confirmed organic customers, zero confirmed organic repeat buyers, and $0.18 gross Base USDC receipts. The 721 unpaid 402 responses in the metrics window are discovery/scanner traffic, not buyers or revenue.
+
+Agent Bazaar still returns all three verified resources as IDs 81876/81877/81878 with the correct prices and Base payment terms. Agent402 still indexes all three tools, reports health 1 and five successful crawls, and makes them callable in its limited `unproven` lane, but its buyer-router delivery sample remains zero and normal dispatch eligibility remains blocked by `settlement_required`. PayAPI continues to list Research as settlement-verified from November 7. Fresh search also finds FreshFact in 402 Registry, Agenstry, x402-trust, and Kertivo, but none supplies evidence of an organic paid call.
+
+Current competition reinforces the existing product decision. PayAPI now shows a settlement-verified safe web reader at $0.003 per call and other deterministic agent utilities around $0.002-$0.01. Fresh402 publishes extraction at $0.01, website-change intelligence at $0.005, API compatibility review at $0.01, and higher-value evidence workflows at $0.025-$0.04. Wikipedia-only Research at $0.05 has no demonstrated organic demand, so do not extend or reprice it without a buyer. A pivot toward live-web change monitoring remains plausible, but implementation is still gated on one prepaid design partner or three credible buyers naming the same recurring job.
+
+`npm audit --omit=dev` remains at three high-severity dependency paths and zero critical, moderate, low, or informational findings. They remain the Coinbase SDK 1.62.0 / abitype 1.0.6 / Zod 3.25.76 constrained-collection memory advisory chain. npm's suggested Coinbase 1.7.0 downgrade is incompatible and was not applied. All five x402 packages are current at 2.32.0; only unsupported major upgrades to Express 5 and Undici 8 remain.
+
+Highest-value objective: obtain one independently funded paid delivery through a current listing and determine whether that payer repeats; if none appears, secure one prepaid design partner for a narrow live-web change-monitoring job before building it. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 21: x402 2.32.0 maintenance and distribution checkpoint
 
