@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-24. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-25. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 25: operational and competitive checkpoint
+
+No source commit or deployment appeared after the November 24 checkpoint. Production remains live on release `44e6f78ca0c90bc3ac2e5e971e97b09dbcf47f91` and Render deployment `dep-dc0smpm7bikc739qgcg0`. The only newer GitHub change is the November 24 status checkpoint, so runtime source is unchanged. All 69 tests pass. The landing page, browser checkout, health, OpenAPI, `llms.txt`, all three x402 discovery documents, robots, and sitemap return 200. Evidence, Verify, and Research issue x402 v2 challenges for 10,000/30,000/50,000 atomic Base USDC to the configured recipient with Bazaar metadata.
+
+Render recorded no error-level event, HTTP 5xx response, `paymentPresented:true` event, or `deliverySucceeded:true` event from `2026-11-24T16:49:00Z` through `2026-11-25T16:56:00Z`. The service remained at one instance; sampled CPU peaked below 0.0039 core and sampled memory below 111 MB. Metrics counted 632 unpaid HTTP 402 responses. These are repeated discovery or scanner challenges, not evidence that 632 people considered buying: none included a payment and none received product.
+
+Commercial evidence remains unchanged after excluding every owner-controlled test: four external paid calls, three distinct external payer fingerprints, one repeat external payer fingerprint, zero confirmed organic customers, zero confirmed organic repeat buyers, and $0.18 gross Base USDC receipts. Agent Bazaar still returns all three verified resources as IDs 81876/81877/81878. Agent402 still indexes all three healthy callable tools, but its delivery sample remains zero and normal router dispatch remains ineligible with `settlement_required`. PayAPI still publishes only Research as one settlement-verified route from its November 7 marketplace test. Agenstry still reports zero observed invocations in seven days.
+
+The dependency review found no new safe patch. Supported-version dependencies remain current and all five x402 packages remain exactly pinned at 2.32.0. `npm audit --omit=dev` remains at three high-severity paths and zero critical, moderate, low, or informational findings: Coinbase SDK 1.62.0 leads through abitype 1.0.6 to Zod 3.25.76 and the constrained-collection memory advisory. npm's proposed Coinbase 1.7.0 downgrade is incompatible and remains rejected. Express 5 and Undici 8 are unsupported major upgrades and were not forced.
+
+Competitive evidence now makes the product mismatch clearer. PayAPI lists a settlement-verified safe live-web reader at $0.003. A separate Agent Evidence API advertises claim checking across up to five public URLs, labels passages as supporting, contradicting, or inconclusive, offers a free real sample, and charges $0.01; FreshFact Verify accepts up to three URLs, returns lexical overlap without a truth verdict, and charges $0.03. Wikipedia-only Research remains $0.05. This does not prove that a price cut alone would create demand; it shows that current FreshFact products offer less obvious task value at higher prices.
+
+Recommendation: keep the technically working endpoints available, stop treating unpaid probes as buyer interest, and pivot only with buyer evidence. The next build should be a narrow live-web monitoring or evidence-safety job chosen by one prepaid design partner or three credible interviews naming the same recurring need. Highest-value objective: secure that design partner and a defined repeat-use job; a new independently funded paid delivery through the current listings remains useful evidence but is no longer a sufficient product strategy by itself. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 24: operational and demand checkpoint
 
