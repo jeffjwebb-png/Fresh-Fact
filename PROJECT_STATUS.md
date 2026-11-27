@@ -1,6 +1,20 @@
 # FreshFact project status
 
-Updated 2026-11-26. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+Updated 2026-11-27. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
+
+## November 27: operational and distribution checkpoint
+
+No source commit or deployment appeared after the November 26 checkpoint. Production remains live on release `44e6f78ca0c90bc3ac2e5e971e97b09dbcf47f91` and Render deployment `dep-dc0smpm7bikc739qgcg0`; the six later GitHub commits modify only this status record. All 69 tests pass. The landing page, browser checkout, health, OpenAPI, `llms.txt`, all three x402 discovery documents, robots, and sitemap return 200. Evidence, Verify, and Research issue x402 v2 challenges for 10,000/30,000/50,000 atomic Base USDC to the configured recipient with Bazaar metadata.
+
+Render recorded no error-level event, HTTP 5xx response, `paymentPresented:true` event, or `deliverySucceeded:true` event from `2026-11-26T16:06:00Z` through `2026-11-27T16:50:01Z`. The service remained at one instance; sampled CPU peaked below 0.0137 core and sampled memory below 150 MB. Metrics counted 593 unpaid HTTP 402 responses. These are discovery or scanner challenges, not customers or revenue: none included a payment and none received product.
+
+Commercial evidence remains unchanged after excluding every owner-controlled test: four external paid calls, three distinct external payer fingerprints, one repeat external payer fingerprint, zero confirmed organic customers, zero confirmed organic repeat buyers, and $0.18 gross Base USDC receipts.
+
+One distribution endpoint changed without losing the listing. The former `agent402.com` domain now redirects to a domain-sale page, but the live service has moved to `agent402.tools`; its current API still indexes all three FreshFact products, reports health 1, and marks them callable. Normal router dispatch remains ineligible with `settlement_required`, so this is discovery rather than a buyer or sale. Saylor Agent Bazaar still returns all three verified resources as IDs 81876/81877/81878, and PayAPI still publishes Research as settlement-verified at $0.05. `agent-tools.cloud` now also indexes Evidence as ID 29208, but grades the imported listing F/down because it probes the bare Evidence URL and receives the intentional missing-input 400; its own separate x402 probe records a valid 402. Correcting that third-party listing requires a contact address plus account/domain ownership verification, so no personal contact information or credentials were transmitted. x402.new still has no exact FreshFact result.
+
+The dependency review found no new safe patch. `npm audit --omit=dev` remains at three high-severity paths and zero critical, moderate, low, or informational findings: Coinbase SDK 1.62.0 leads through abitype 1.0.6 to Zod 3.25.76 and the constrained-collection memory advisory. npm's proposed Coinbase 1.7.0 downgrade is incompatible and remains rejected. All five x402 packages remain exactly pinned at 2.32.0; Express 5 and Undici 8 are unsupported major upgrades and were not forced.
+
+Recommendation remains unchanged: keep the working endpoints available, but do not cut price or build another speculative endpoint from directory traffic. Highest-value objective: secure one prepaid design partner, or three credible buyer interviews naming the same recurring live-web monitoring or evidence-safety job, then build the smallest repeatable workflow for that job. Long-term target math remains a target, not a forecast: Evidence needs $0.01 × 1,000 customers × 100 calls/day = $1,000/day; Verify needs $0.03 × 1,000 × 34 = $1,020/day; Research needs $0.05 × 1,000 × 20 = $1,000/day.
 
 ## November 26: operational and commercial checkpoint
 
