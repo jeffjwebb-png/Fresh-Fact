@@ -11,8 +11,8 @@ Payment is per request in USDC on Base, via [x402](https://x402.org). No account
 | Tool | What it does | Price |
 | --- | --- | ---: |
 | `freshfact_evidence` | Fetch a public page and return its text with provenance and integrity hash | $0.01 |
-| `freshfact_verify` | Find passages in one to three supplied URLs that share terms with a claim | $0.03 |
-| `freshfact_research` | Search English Wikipedia and retrieve up to three pages with related passages | $0.05 |
+| `freshfact_verify` | Find passages in one to three supplied URLs that share terms with a claim | $0.02 |
+| `freshfact_research` | Search English Wikipedia and retrieve up to three pages with related passages | $0.02 |
 
 `freshfact_verify` and `freshfact_research` return **lexical term overlap only**. `termCoverage` is not a truth verdict, and a returned passage may contradict the claim. Neither tool adjudicates whether something is true.
 

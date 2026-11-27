@@ -2,6 +2,10 @@
 
 Updated 2026-11-27. Read this before choosing new work. Do not reset completed milestones because conversation context is missing.
 
+## November 27: owner-directed price reduction
+
+Jeff explicitly requested lowering FreshFact to two cents while considering another direction. This supersedes earlier advice in this log to keep prices unchanged. Verify and Research are now configured at $0.02 USDC per call; Evidence stays at its already lower $0.01. Runtime quotes, descriptions, discovery/OpenAPI, listing copy and MCP descriptions are updated together. Deployment and live verification must be recorded separately; a source change alone is not proof of a live price change. No additional product features are requested.
+
 ## November 27: operational and distribution checkpoint
 
 No source commit or deployment appeared after the November 26 checkpoint. Production remains live on release `44e6f78ca0c90bc3ac2e5e971e97b09dbcf47f91` and Render deployment `dep-dc0smpm7bikc739qgcg0`; the six later GitHub commits modify only this status record. All 69 tests pass. The landing page, browser checkout, health, OpenAPI, `llms.txt`, all three x402 discovery documents, robots, and sitemap return 200. Evidence, Verify, and Research issue x402 v2 challenges for 10,000/30,000/50,000 atomic Base USDC to the configured recipient with Bazaar metadata.

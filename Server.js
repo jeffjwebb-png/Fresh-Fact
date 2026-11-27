@@ -457,14 +457,14 @@ async function start() {
       extensions: evidenceDiscovery,
     },
     "POST /api/verify": {
-      accepts: { scheme: "exact", price: "$0.03", network: "eip155:8453", payTo, maxTimeoutSeconds: 300 },
-      description: "Given a claim and one to three public source URLs, retrieve those pages and return passages that share significant terms with the claim, each with its source URL, retrieval timestamp, and a SHA-256 content hash. Returns lexical term overlap only: termCoverage is not a truth verdict, and a returned passage may contradict the claim. Use to locate citable passages, not to adjudicate. Priced $0.03 per call in USDC on Base.",
+      accepts: { scheme: "exact", price: "$0.02", network: "eip155:8453", payTo, maxTimeoutSeconds: 300 },
+      description: "Given a claim and one to three public source URLs, retrieve those pages and return passages that share significant terms with the claim, each with its source URL, retrieval timestamp, and a SHA-256 content hash. Returns lexical term overlap only: termCoverage is not a truth verdict, and a returned passage may contradict the claim. Use to locate citable passages, not to adjudicate. Priced $0.02 per call in USDC on Base.",
       mimeType: "application/json", serviceName: "FreshFact Verify",
       tags: ["evidence", "claim", "source", "verification", "agents", "provenance", "passages", "citations"], extensions: verifyDiscovery,
     },
     "POST /api/research": {
-      accepts: { scheme: "exact", price: "$0.05", network: "eip155:8453", payTo, maxTimeoutSeconds: 300 },
-      description: "Search English Wikipedia for a query and retrieve up to three matching pages, returning related passages with source URLs, retrieval timestamps, and SHA-256 content hashes. Coverage is English Wikipedia only: this is not a live-web search and returns no truth verdict. Use when an agent needs Wikipedia-sourced passages with provenance attached. Priced $0.05 per call in USDC on Base.",
+      accepts: { scheme: "exact", price: "$0.02", network: "eip155:8453", payTo, maxTimeoutSeconds: 300 },
+      description: "Search English Wikipedia for a query and retrieve up to three matching pages, returning related passages with source URLs, retrieval timestamps, and SHA-256 content hashes. Coverage is English Wikipedia only: this is not a live-web search and returns no truth verdict. Use when an agent needs Wikipedia-sourced passages with provenance attached. Priced $0.02 per call in USDC on Base.",
       mimeType: "application/json", serviceName: "FreshFact Research",
       tags: ["research", "wikipedia", "evidence", "agents", "provenance", "passages", "citations"], extensions: researchDiscovery,
     },
@@ -607,8 +607,8 @@ async function start() {
   <pre>GET ${baseUrl}/api/evidence?url=https%3A%2F%2Fexample.com</pre>
 
   <h2>${productsEnabled ? "More available products" : "Planned products · purchases unavailable"}</h2>
-  <p><strong>FreshFact Verify · $0.03:</strong> POST /api/verify with JSON {"claim":"...","urls":["https://example.com"]}. Returns relevant passages and source fingerprints. It does not make a truth determination.</p>
-  <p><strong>FreshFact Research · $0.05:</strong> POST /api/research with JSON {"query":"..."}. Searches English Wikipedia and retrieves up to three pages. It does not search the live web.</p>
+  <p><strong>FreshFact Verify · $0.02:</strong> POST /api/verify with JSON {"claim":"...","urls":["https://example.com"]}. Returns relevant passages and source fingerprints. It does not make a truth determination.</p>
+  <p><strong>FreshFact Research · $0.02:</strong> POST /api/research with JSON {"query":"..."}. Searches English Wikipedia and retrieves up to three pages. It does not search the live web.</p>
 
   <h2>What you receive</h2>
   <ul>
@@ -655,7 +655,7 @@ async function start() {
     res.type("text/plain").send(
 `# FreshFact
 
-Status: ${evidenceEnabled ? (productsEnabled ? "Evidence ($0.01), Verify ($0.03) and Wikipedia Research ($0.05) are active on Base USDC." : "Evidence is active at $0.01 USDC per request on Base. Verify and Research are paused.") : "paused for output quality review. Paid routes return HTTP 503 before payment, so no payment is accepted while paused."}
+Status: ${evidenceEnabled ? (productsEnabled ? "Evidence ($0.01), Verify ($0.02) and Wikipedia Research ($0.02) are active on Base USDC." : "Evidence is active at $0.01 USDC per request on Base. Verify and Research are paused.") : "paused for output quality review. Paid routes return HTTP 503 before payment, so no payment is accepted while paused."}
 
 FreshFact creates audit-ready web evidence receipts for software agents over x402. Each receipt identifies the exact normalized text delivered, provides citation offsets and section hashes, and records source provenance and retrieval time. Sources may serve cached copies; sourceCacheAgeSeconds reports the upstream cache age when available, while retrievedAt is the retrieval timestamp. FreshFact requests cache revalidation but cannot guarantee the source honors it.
 
@@ -665,7 +665,7 @@ GET ${baseUrl}/api/evidence?url=<public-http-or-https-url>&maxChars=30000
 Price: $0.01 USDC
 Network: Base mainnet (eip155:8453)
 
-${productsEnabled ? "Available: POST /api/verify ($0.03) accepts claim and urls; POST /api/research ($0.05) accepts query." : "Planned, unavailable for purchase:"} Verify finds related passages in supplied public pages; Research searches English Wikipedia. Neither is a truth verdict.
+${productsEnabled ? "Available: POST /api/verify ($0.02) accepts claim and urls; POST /api/research ($0.02) accepts query." : "Planned, unavailable for purchase:"} Verify finds related passages in supplied public pages; Research searches English Wikipedia. Neither is a truth verdict.
 
 Returns a unique receipt ID, clean page text, citation-ready section offsets and hashes, title, description, canonical URL, published/modified dates when available, HTTP freshness headers, redirect chain, word count, SHA-256 content hash, source URL and retrieval timestamp.
 When active, FreshFact prepares and validates the complete deliverable before requesting x402 payment. Invalid or unusable sources are rejected without requesting payment.
@@ -720,8 +720,8 @@ ${baseUrl}/.well-known/x402-catalog.json
             "retrieval timestamp",
           ],
         },
-        { method: "POST", url: `${baseUrl}/api/verify`, price: "$0.03", input: { claim: "Required claim", urls: "1 to 3 public URLs" }, output: ["source passages", "retrieval timestamp", "content hash", "lexical assessment"] },
-        { method: "POST", url: `${baseUrl}/api/research`, price: "$0.05", input: { query: "Required query; English Wikipedia only" }, output: ["up to three article sources", "related passages", "retrieval timestamps", "content hashes"] },
+        { method: "POST", url: `${baseUrl}/api/verify`, price: "$0.02", input: { claim: "Required claim", urls: "1 to 3 public URLs" }, output: ["source passages", "retrieval timestamp", "content hash", "lexical assessment"] },
+        { method: "POST", url: `${baseUrl}/api/research`, price: "$0.02", input: { query: "Required query; English Wikipedia only" }, output: ["up to three article sources", "related passages", "retrieval timestamps", "content hashes"] },
       ],
       docs: `${baseUrl}/openapi.json`,
       llms: `${baseUrl}/llms.txt`,
@@ -835,7 +835,7 @@ ${baseUrl}/.well-known/x402-catalog.json
             summary: "Find passages related to a claim in supplied source URLs",
             description: "Lexical matches do not establish whether a claim is true or supported; inspect the cited passage.",
             security: [{ x402Payment: [] }],
-            "x-payment-info": { protocols: ["x402"], price: { mode: "fixed", currency: "USD", amount: "0.03" }, network: "eip155:8453", asset: "USDC" },
+            "x-payment-info": { protocols: ["x402"], price: { mode: "fixed", currency: "USD", amount: "0.02" }, network: "eip155:8453", asset: "USDC" },
             requestBody: { required: true, content: { "application/json": { schema: { type: "object", properties: {
               claim: { type: "string", minLength: 8, maxLength: 300 },
               urls: { type: "array", minItems: 1, maxItems: 3, items: { type: "string", format: "uri" } },
@@ -848,7 +848,7 @@ ${baseUrl}/.well-known/x402-catalog.json
             summary: "Search English Wikipedia and retrieve up to three source pages",
             description: "Coverage is limited to English Wikipedia. Results are not a live-web search or a truth verdict.",
             security: [{ x402Payment: [] }],
-            "x-payment-info": { protocols: ["x402"], price: { mode: "fixed", currency: "USD", amount: "0.05" }, network: "eip155:8453", asset: "USDC" },
+            "x-payment-info": { protocols: ["x402"], price: { mode: "fixed", currency: "USD", amount: "0.02" }, network: "eip155:8453", asset: "USDC" },
             requestBody: { required: true, content: { "application/json": { schema: { type: "object", properties: {
               query: { type: "string", minLength: 3, maxLength: 300 },
             }, required: ["query"] } } } },
@@ -883,7 +883,7 @@ ${baseUrl}/.well-known/x402-catalog.json
     },
     products: [
       { method: "GET", path: "/api/evidence", price: "0.01" },
-      ...(productsEnabled ? [{method:"POST",path:"/api/verify",price:"0.03"},{method:"POST",path:"/api/research",price:"0.05"}] : []),
+      ...(productsEnabled ? [{method:"POST",path:"/api/verify",price:"0.02"},{method:"POST",path:"/api/research",price:"0.02"}] : []),
     ],
   };
 

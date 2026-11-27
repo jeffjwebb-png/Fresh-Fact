@@ -16,21 +16,21 @@ These replace the `description` and `serviceName` fields on each route in `Serve
 
 > Create an audit-ready evidence receipt for a public web page: exact normalized text, citation offsets and section hashes, source provenance, retrieval time, redirects, freshness signals, and a SHA-256 content hash. Use when an agent must preserve what it saw for later review. Priced $0.01 per call in USDC on Base. FreshFact validates and prepares the result before requesting payment; the receipt carries no truth verdict.
 
-### Verify — `POST /api/verify` — $0.03
+### Verify — `POST /api/verify` — $0.02
 
 **serviceName:** `FreshFact Verify`
 
 **description:**
 
-> Given a claim and one to three public source URLs, retrieve those pages and return passages that share significant terms with the claim, each with its source URL, retrieval timestamp, and a SHA-256 content hash. Returns lexical term overlap only — `termCoverage` is not a truth verdict, and a returned passage may contradict the claim. Use to locate citable passages, not to adjudicate. Priced $0.03 per call in USDC on Base.
+> Given a claim and one to three public source URLs, retrieve those pages and return passages that share significant terms with the claim, each with its source URL, retrieval timestamp, and a SHA-256 content hash. Returns lexical term overlap only — `termCoverage` is not a truth verdict, and a returned passage may contradict the claim. Use to locate citable passages, not to adjudicate. Priced $0.02 per call in USDC on Base.
 
-### Research — `POST /api/research` — $0.05
+### Research — `POST /api/research` — $0.02
 
 **serviceName:** `FreshFact Research`
 
 **description:**
 
-> Search English Wikipedia for a query and retrieve up to three matching pages, returning related passages with source URLs, retrieval timestamps, and SHA-256 content hashes. Coverage is English Wikipedia only — this is not a live-web search and returns no truth verdict. Use when an agent needs Wikipedia-sourced passages with provenance attached. Priced $0.05 per call in USDC on Base.
+> Search English Wikipedia for a query and retrieve up to three matching pages, returning related passages with source URLs, retrieval timestamps, and SHA-256 content hashes. Coverage is English Wikipedia only — this is not a live-web search and returns no truth verdict. Use when an agent needs Wikipedia-sourced passages with provenance attached. Priced $0.02 per call in USDC on Base.
 
 ---
 

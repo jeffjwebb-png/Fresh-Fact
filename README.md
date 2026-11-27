@@ -9,8 +9,8 @@ When Evidence is active, a valid source request without payment returns HTTP 402
 | Product | Request | Price | Coverage |
 | --- | --- | ---: | --- |
 | Evidence Receipt | `GET /api/evidence?url=<public-url>` | $0.01 | Audit-ready record of the exact normalized text delivered from one public HTML/plain-text URL. |
-| Verify | `POST /api/verify` with `{"claim":"...","urls":["https://example.com"]}` | $0.03 | One to three supplied public URLs; passages sharing terms with the claim, retrieval time, content hash. No semantic truth verdict. |
-| Research | `POST /api/research` with `{"query":"..."}` | $0.05 | Search English Wikipedia and retrieve up to three matching pages. Wikipedia only; not a live-web search. |
+| Verify | `POST /api/verify` with `{"claim":"...","urls":["https://example.com"]}` | $0.02 | One to three supplied public URLs; passages sharing terms with the claim, retrieval time, content hash. No semantic truth verdict. |
+| Research | `POST /api/research` with `{"query":"..."}` | $0.02 | Search English Wikipedia and retrieve up to three matching pages. Wikipedia only; not a live-web search. |
 
 Evidence returns a top-level `receipt` with a unique `receiptId`, schema version, subject URL, verification instructions, and citation entries. Each citation points to a stable start/end range in `data.text` and includes its own SHA-256 hash. `data.sections` remains available for direct parsing. A page with no usable extracted text returns `EMPTY_SOURCE` instead of an empty successful result. The hashes prove which normalized text FreshFact delivered; they do not prove that the source page is truthful or authentic. Store the response when later review is required because FreshFact does not archive source pages.
 

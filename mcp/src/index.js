@@ -158,7 +158,7 @@ server.tool(
 
 server.tool(
   "freshfact_verify",
-  "Given a claim and one to three public source URLs, retrieve those pages and return passages sharing significant terms with the claim, each with its source URL, retrieval timestamp and SHA-256 content hash. Returns lexical term overlap only: termCoverage is not a truth verdict and a returned passage may contradict the claim. Use to locate citable passages, not to adjudicate. Paid per call in USDC on Base via x402 ($0.03).",
+  "Given a claim and one to three public source URLs, retrieve those pages and return passages sharing significant terms with the claim, each with its source URL, retrieval timestamp and SHA-256 content hash. Returns lexical term overlap only: termCoverage is not a truth verdict and a returned passage may contradict the claim. Use to locate citable passages, not to adjudicate. Paid per call in USDC on Base via x402 ($0.02).",
   {
     claim: z
       .string()
@@ -184,7 +184,7 @@ server.tool(
 
 server.tool(
   "freshfact_research",
-  "Search English Wikipedia for a query and retrieve up to three matching pages, returning related passages with source URLs, retrieval timestamps and SHA-256 content hashes. Coverage is English Wikipedia only: this is not a live-web search and returns no truth verdict. Paid per call in USDC on Base via x402 ($0.05).",
+  "Search English Wikipedia for a query and retrieve up to three matching pages, returning related passages with source URLs, retrieval timestamps and SHA-256 content hashes. Coverage is English Wikipedia only: this is not a live-web search and returns no truth verdict. Paid per call in USDC on Base via x402 ($0.02).",
   {
     query: z
       .string()
