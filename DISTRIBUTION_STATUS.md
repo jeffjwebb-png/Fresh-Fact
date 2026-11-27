@@ -1,4 +1,12 @@
-# FreshFact distribution — November 18, 2026
+# FreshFact distribution — updated November 27, 2026
+
+## November 27 update
+
+- Agent402 changed domains. The former `agent402.com` now redirects to a domain-sale page, while the live marketplace and API are at `agent402.tools`. The migrated API still returns all three FreshFact tools, health `1`, and `executeViaCallableNow=true`. Normal router dispatch remains blocked by `settlement_required`; this is persistent discovery, not a paid call.
+- Agent Bazaar by Saylor Innovations still returns Evidence, Verify, and Research as verified resources 81876/81877/81878 with the expected 10,000/30,000/50,000 atomic Base USDC prices.
+- PayAPI still publishes FreshFact Research at $0.05 and marks it settlement-verified.
+- `agent-tools.cloud` now has an automatically imported FreshFact Evidence record, ID 29208. Its service card labels the listing down/readiness F because it probes the bare Evidence route and gets the intentional missing-input HTTP 400, while its independent x402 probe records HTTP 402, `valid_402=true`, and consistent terms. The production discovery document already supplies a working sample URL. Editing the third-party record requires contact information and account/domain ownership verification; no personal information or credentials were transmitted.
+- x402.new still returns no exact FreshFact name or host result. None of these directory checks establishes a new buyer or revenue. Wallet-level payer/transaction counts shown by aggregators are not counted because they include owner tests and are not attributable to a delivered FreshFact purchase.
 
 ## Completed
 
